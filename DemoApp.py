@@ -11,7 +11,7 @@ from src.user.User import User
 
 class DemoApp(cmd.Cmd):
     intro = "Welcome to the DemoAPP for Bus Route Designer. Type help or ? to list commands.\n"
-    prompt = '(Schedule) '
+    prompt = '(Demo) '
     file = None
 
     def __init__(self):
