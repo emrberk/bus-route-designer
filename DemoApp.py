@@ -21,6 +21,7 @@ class DemoApp(cmd.Cmd):
         super().__init__()
 
     def do_demo(self, args):
+        """It can be useful for adding default data"""
         user = User("def", "def@gmail.com", "default account", "1234")
         token = user.login("1234")
         User.users.append(user)
@@ -59,6 +60,7 @@ class DemoApp(cmd.Cmd):
             self.token = token
 
     def do_logout(self, arg):
+        """logout from site"""
         if self.token == "":
             print("You are not logged in.")
         else:
@@ -67,6 +69,7 @@ class DemoApp(cmd.Cmd):
 
     def do_openMap(self, map):
         """load a map or use default one"""
+        # TODO: düzeltilecek
         if self.tokenize():
             self.defaultMap = map
             self.schedule = Schedule(self.defaultMap)
@@ -82,6 +85,7 @@ class DemoApp(cmd.Cmd):
         print(f"Stop added with ID: {stop_id}")
 
     def do_delStop(self, arg):
+        """Delete a stop from the map"""
         if self.tokenize():
             stop_id = input("Enter the stop ID: ")
             try:
@@ -93,6 +97,7 @@ class DemoApp(cmd.Cmd):
                 print("An error happened : ", e)
 
     def do_getStop(self, arg):
+        """get basic information about a stop"""
         if self.tokenize():
             stop_id = input("Enter the stop ID: ")
             try:
@@ -101,6 +106,7 @@ class DemoApp(cmd.Cmd):
                 print("An error happened : ", e)
 
     def do_stopDistance(self, args):
+        """finds and returns the distance between two stops."""
         if self.tokenize():
             stopID1 = input("Enter the stop ID for first stop: ")
             stopID2 = input("Enter the stop ID for first stop: ")
@@ -112,6 +118,7 @@ class DemoApp(cmd.Cmd):
                 pass
 
     def do_shortestStop(self, arg):
+        """Gives the closest stop from given location."""
         # TODO: bura hata atıyor düzeltilecek
         if self.tokenize():
             x = float(input("Enter the x coordinate: "))
@@ -155,6 +162,10 @@ class DemoApp(cmd.Cmd):
             print(f"Route created with id: {route.id}")
 
     def do_getRoute(self, arg):
+        """
+        Gets route with given id
+        Usage: getRoute <route_id>
+        """
         if self.tokenize():
             routeId = int(arg)
             try:
@@ -165,7 +176,7 @@ class DemoApp(cmd.Cmd):
     def do_updateRoute(self, arg):
         """
         updates the route with given stop ids
-        Usage: createRoute <route_id> <stop_id1> <stop_id2> ...
+        Usage: updateRoute <route_id> <stop_id1> <stop_id2> ...
         """
         if self.tokenize():
             stop_ids = arg.split()
@@ -180,8 +191,8 @@ class DemoApp(cmd.Cmd):
 
     def do_delRoute(self, arg):
         """
-        Deletes the routes with given stop ids
-        Usage: createRoute <route_id> <stop_id1> <stop_id2> ...
+        Deletes the routes with given ids
+        Usage: createRoute <route_id1> <route_id2> <route_id2> ...
         """
         if self.tokenize():
             route_ids = arg.split()
@@ -195,18 +206,21 @@ class DemoApp(cmd.Cmd):
                 print(f"Route deleted with id: {id}")
 
     def do_showRoutes(self, arg):
+        """lists all the routes in Schedule"""
         if not self.schedule.routes:
             print("There is no Routes in the schedule now.")
         for route in self.schedule.routes:
             print(route)
 
     def do_showLines(self, arg):
+        """lists all the lines in Schedule."""
         if not self.schedule.lines:
             print("There is no Line in the schedule now.")
         for line in self.schedule.lines:
             print(line)
 
     def do_newLine(self, arg):
+        """Creates a new Line in the Schedule."""
         if self.tokenize():
             while True:
                 start_time_str = input("Enter start time in HH:MM format: ")
@@ -245,6 +259,10 @@ class DemoApp(cmd.Cmd):
                 break
 
     def do_lineInfo(self, arg):
+        """
+        Gives detailed line information
+        Usage : lineInfo <line_id>
+        """
         if self.tokenize():
             line_ids = arg.split()
             if len(line_ids) == 0:
@@ -254,6 +272,10 @@ class DemoApp(cmd.Cmd):
             self.schedule.lineinfo(line_ids[0])
 
     def do_stopInfo(self, arg):
+        """
+        Gives detailed line information
+        Usage : stopInfo <stop_id>
+        """
         if self.tokenize():
             stop_ids = arg.split()
             if len(stop_ids) == 0:
