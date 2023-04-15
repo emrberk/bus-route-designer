@@ -1,7 +1,10 @@
 import hashlib
 import uuid
 
+
 class User:
+    users = []
+
     def __init__(self, username, email, fullName, password):
         self.username = username
         self.email = email
@@ -53,10 +56,56 @@ class User:
     def logout(self):
         self.sessionToken = None
 
+    @staticmethod
+    def listUsers():
+        for unnamed in User.users:
+            print(unnamed.getFullName())
+
+    @staticmethod
+    def createUser():
+        print("Please give me a username :")
+        username = input()
+        print("Please enter your email : ")
+        email = input()
+        print("What is your name (name - lastname) : ")
+        fullName = input()
+        print("Please select your password : ")
+        while True:
+            ch = 'y'
+            passwd1 = input()
+            print("Please enter your password again : ")
+            passwd2 = input()
+            if passwd2 != passwd1:
+                print("Your passwords are not matching, do you want to try again (y/N)")
+                while ch.lower() != 'y':
+                    ch = input()
+                    if ch.lower() == 'n':
+                        print("See you again. Goodbye :)")
+                        exit(0)
+                    else:
+                        print("You typed wrong character, please try again (y/N)")
+            else:
+                break
+        newUser = User(username, email, fullName, passwd1)
+        User.users.append(newUser)
+        print("Welcome to the ecosystem of BRD")
+        return newUser
+
+    @staticmethod
+    def getUser(usrname):
+        if not User.users:
+            print(f"There is no user named {usrname}. If you wish to create new account, you need to type signUp.")
+            return None
+        for unnamed in User.users:
+            if unnamed.getUsername() == usrname:
+                return unnamed
+            else:
+                print(f"There is no user named {usrname}. If you wish to create new account, you need to type signUp.")
+                return None
+
 if __name__ == '__main__':
     user = User('asd', 'asd', 'asd', 'asd')
     token = user.login('asd')
     print(token)
     user.logout()
     print(user.sessionToken)
-

@@ -13,7 +13,7 @@ class Schedule:
         for route in routes:
             for stop in route.stops:
                 if stop not in self.map.stops:
-                    logging.error("Given stop id with %s in not in the map", stop)
+                    logging.error(f"Given stop id with {stop} is not in the map")
                     exit(500)
 
         for route in routes:
@@ -25,11 +25,12 @@ class Schedule:
             return
         return self.routes[id - 1]
 
-    def updateroute(self, id, route):
+    def updateroute(self, id, stopIds):
         if not self.routes[id - 1].active:
             logging.error("Deleted routes cannot be updated")
             return
-        self.routes[id - 1] = route
+        route = self.getroute(id -1)
+        route.stops = stopIds
 
     def delroute(self, id):
         self.routes[id - 1].active = False

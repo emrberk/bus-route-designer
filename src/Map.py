@@ -60,7 +60,7 @@ class Map:
         return self.stops[stopId]
 
     def delStop(self, stopId: uuid.UUID):
-        self.stops.pop(stopId)
+        del self.stops[stopId]
         return stopId
 
     def getWayLength(self, wayNo: str) -> float:
@@ -215,3 +215,9 @@ class Map:
                 shortestId = stopId
                 minDistance = distance
         return shortestId
+
+    def getStopsInfo(self):
+        if self.stops == {}:
+            print("There is no stop in this area.")
+        for stop in self.stops:
+            print(self.getStop(stop))
