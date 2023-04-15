@@ -1,10 +1,11 @@
 import json
 import uuid
 from queue import PriorityQueue
-import Utils
+from src.util import Utils
 
-FILE_PATH = './map.json'
+FILE_PATH = 'maps/map.json'
 JSON_STR = ''
+
 
 class Map:
     def __init__(self, path=FILE_PATH, jsonStr=JSON_STR):
@@ -176,7 +177,7 @@ class Map:
                 lengthInCurrentSegment = desiredLength - currentLength
                 d = lengthInCurrentSegment / segmentLength
                 point = Utils.calculateS(directedEdge[i], directedEdge[i + 1], d)
-                stopId = uuid.uuid1()
+                stopId = uuid.uuid4()
                 self.setStop(stopId, {
                     "id": stopId,
                     "x": point['x'],
@@ -214,10 +215,3 @@ class Map:
                 shortestId = stopId
                 minDistance = distance
         return shortestId
-
-if __name__ == '__main__':
-    m = Map()
-    print(m.shortest('0', '32'))
-    stopId1 = m.addstop('0', False, 0.0, 'test1')
-    stopId2 = m.addstop('41', True, 100, 'test2')
-    print(m.stopdistance(stopId1, stopId1))

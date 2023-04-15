@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import datetime
 
 
 def euclideanDistance(p1: dict, p2: dict) -> float:
@@ -38,3 +39,24 @@ def calculateDistance(p1: dict, p2: dict, location: dict) -> list:
 def isEqual(point1: dict, point2: dict):
     # node coordinates and way point coordinates differ after 2 decimal places.
     return round(point1['x'], 2) == round(point2['x'], 2) and round(point1['y'], 2) == round(point2['y'], 2)
+
+
+def add_times(time1, time2):
+    t1 = datetime.datetime.strptime(str(time1), '%H:%M:%S')
+    t2 = datetime.datetime.strptime(str(time2), '%H:%M:%S')
+    total = t1 + (t2 - datetime.datetime(1900, 1, 1))
+    return datetime.time(total.hour, total.minute, total.second)
+
+
+def time_difference(start, end):
+    if end < start:
+        end += datetime.timedelta(days=1)
+    diff = datetime.datetime.combine(datetime.date.today(), end) - datetime.datetime.combine(datetime.date.today(),
+                                                                                             start)
+    hours, remainder = divmod(diff.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return datetime.time(hours, minutes, seconds)
+
+
+def getTimeStr(time):
+    return time.strftime("%H:%M")
