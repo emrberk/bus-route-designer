@@ -1,7 +1,8 @@
 import datetime
-from src.util import Utils
 import logging
-from Route import Route
+
+from src.Route import Route
+from src.util import Utils
 
 
 class Schedule:
