@@ -155,7 +155,7 @@ class Map:
         result = {
             'edgeId': '',
             "distance": float('inf'),
-            "closestPoint": {"x": 0, "y": 0},
+            "closestPoint": Point(0, 0),
             "percentage": 0
         }
         for wayNo, way in self.ways.items():
@@ -235,8 +235,3 @@ class Map:
             print("There is no stop in this area.")
         for stop in self.stops:
             print(self.getStop(stop))
-
-if __name__ == "__main__":
-    m = Map()
-    print(m.shortest('0', '32'))
-    print()
