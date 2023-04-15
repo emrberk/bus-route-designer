@@ -1,6 +1,6 @@
 import hashlib
 import uuid
-
+from src.util.Validators import *
 
 class User:
     users = []
@@ -65,14 +65,28 @@ class User:
     def createUser():
         print("Please give me a username :")
         username = input()
-        print("Please enter your email : ")
-        email = input()
+        while True:
+            print("Please enter your email : ")
+            email = input()
+            if not email_validator(email):
+                print("Please provide an valid email address")
+                continue
+            break
         print("What is your name (name - lastname) : ")
         fullName = input()
         print("Please select your password : ")
         while True:
             ch = 'y'
             passwd1 = input()
+            if not password_validator(passwd1):
+                print("Password is not valid. Your password should include\n "
+                      "- At least 8 characters long\n"
+                      "- Contains at least one lowercase letter\n"
+                      "- Contains at least one uppercase letter\n"
+                      "- Contains at least one digit\n"
+                      "- Contains at least one special character from @#$%^&+=\n"
+                      "please try another password.")
+                continue
             print("Please enter your password again : ")
             passwd2 = input()
             if passwd2 != passwd1:
