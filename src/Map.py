@@ -1,21 +1,37 @@
 import json
 import uuid
 from queue import PriorityQueue
-from src.util import Utils
+from Point import Point
+from BusStop import BusStop
+from util import Utils
 
-FILE_PATH = 'maps/map.json'
+FILE_PATH = '../maps/map.json'
 JSON_STR = ''
 
 
 class Map:
     def __init__(self, path=FILE_PATH, jsonStr=JSON_STR):
-        file = open(path)
-        data = json.load(file)
-        file.close()
-        self.nodes = data['nodes']
-        self.ways = data['ways']
-        self.edges = data['edges']
+        data = {}
+        if not len(jsonStr):
+            file = open(path)
+            data = json.load(file)
+            file.close()
+        else:
+            data = json.loads(jsonStr)
+
+        self.nodes = {}
+        for nodeNo, nodeVal in data['nodes'].items():
+            self.nodes[nodeNo] = Point(nodeVal)
+
+        self.ways = {}
+        for wayNo, wayVal in data['ways'].items():
+            self.ways[wayNo] = []
+            for pt in data['ways'][wayNo]:
+                self.ways[wayNo].append(Point(pt))
+
         self.stops = {}
+
+        self.edges = data['edges']
         for key in self.nodes:
             if key not in self.edges:
                 self.edges[key] = []
@@ -53,7 +69,7 @@ class Map:
                     "wayNo": edge['way']
                 }
 
-    def setStop(self, stopId: uuid.UUID, stop: dict):
+    def setStop(self, stopId: uuid.UUID, stop: BusStop):
         self.stops[stopId] = stop
 
     def getStop(self, stopId: uuid.UUID):
@@ -70,16 +86,16 @@ class Map:
             totalLength += Utils.euclideanDistance(way[i], way[i + 1])
         return totalLength
 
-    def getWaySpeed(self, wayNo):
+    def getWaySpeed(self, wayNo: str) -> float:
         for src, edges in self.edges.items():
             for edge in edges:
                 if edge['way'] == wayNo:
                     return edge['speed']
 
-    def getWayTime(self, wayNo):
+    def getWayTime(self, wayNo: str) -> float:
         return self.getWayLength(wayNo) / self.getWaySpeed(wayNo)
 
-    def getNeighbors(self, node):
+    def getNeighbors(self, node: str) -> [str]:
         neighbors = []
         for x in self.edges[node]:
             neighbors.append(x["to"])
@@ -130,7 +146,7 @@ class Map:
             current = prev[current]
         return [totalWay, time[node2], length[node2]]
 
-    def getPointPercentage(self, point: dict, wayNo: str, segmentStart: int) -> float:
+    def getPointPercentage(self, point: Point, wayNo: str, segmentStart: int) -> float:
         way = self.ways[wayNo]
         # Calculate the distance until current segment
         lengthBeforeCurrent = 0
@@ -143,7 +159,7 @@ class Map:
         totalLength = self.getWayLength(wayNo)
         return (lengthFromStart / totalLength) * 100
 
-    def closestedge(self, location: dict) -> list:
+    def closestedge(self, location: Point) -> list:
         result = {
             'edgeId': '',
             "distance": float('inf'),
@@ -167,6 +183,16 @@ class Map:
         directedEdge = givenEdge if direction else givenEdge[::-1]
         totalLength = self.getWayLength(edgeId)
         desiredLength = (totalLength * percentage) / 100
+        src = ''
+        dest = ''
+        for edgeSource, edges in self.edges.items():
+            for edge in edges:
+                if edge['way'] == edgeId:
+                    src = edgeSource if direction else edge['to']
+                    dest = edge['to'] if direction else edgeSource
+                    break
+            if len(src) > 0:
+                break
 
         currentLength = 0
         for i in range(0, len(directedEdge) - 1):
@@ -178,14 +204,8 @@ class Map:
                 d = lengthInCurrentSegment / segmentLength
                 point = Utils.calculateS(directedEdge[i], directedEdge[i + 1], d)
                 stopId = uuid.uuid4()
-                self.setStop(stopId, {
-                    "id": stopId,
-                    "x": point['x'],
-                    "y": point['y'],
-                    "source": directedEdge[0],
-                    "destination": directedEdge[-1],
-                    "description": description
-                })
+                stop = BusStop(stopId, point, src, dest, description)
+                self.setStop(stopId, stop)
                 return stopId
 
     def stopdistance(self, stop1Id: uuid.UUID, stop2Id: uuid.UUID) -> float:
@@ -196,21 +216,21 @@ class Map:
         stop1Target = ''
         stop2Source = ''
         for nodeNumber, nodeCoordinates in self.nodes.items():
-            if Utils.isEqual(nodeCoordinates, stop1['destination']):
+            if nodeCoordinates == self.nodes[stop1.getDestination()]:
                 stop1Target = nodeNumber
-            if Utils.isEqual(nodeCoordinates, stop2['source']):
+            if nodeCoordinates == self.nodes[stop2.getSource()]:
                 stop2Source = nodeNumber
 
         distanceBetweenNodes = self.shortest(stop1Target, stop2Source)[2]
-        walk1 = Utils.euclideanDistance({"x": stop1['x'], "y": stop1['y']}, self.nodes[stop1Target])
-        walk2 = Utils.euclideanDistance({"x": stop2['x'], "y": stop2['y']}, self.nodes[stop2Source])
+        walk1 = Utils.euclideanDistance(stop1.point, self.nodes[stop1Target])
+        walk2 = Utils.euclideanDistance(stop2.point, self.nodes[stop2Source])
         return distanceBetweenNodes + walk1 + walk2
 
-    def shorteststop(self, location: dict) -> uuid.UUID:
+    def shorteststop(self, location: Point) -> uuid.UUID:
         shortestId = ''
         minDistance = float('inf')
-        for stopId, stopVal in self.stops:
-            distance = Utils.euclideanDistance({"x": stopVal['x'], "y": stopVal['y']}, location)
+        for stopId, stopVal in self.stops.items():
+            distance = Utils.euclideanDistance(stopVal.getPoint(), location)
             if distance < minDistance:
                 shortestId = stopId
                 minDistance = distance

@@ -1,44 +1,40 @@
 import math
+import sys
 import numpy as np
 import datetime
 
-
-def euclideanDistance(p1: dict, p2: dict) -> float:
-    return math.sqrt((p1['x'] - p2['x']) ** 2 + (p1['y'] - p2['y']) ** 2)
-
-
-def calculateD(p0: dict, p1: dict, p2: dict) -> float:
-    p0T = (p0['x'], p0['y'])
-    p1T = (p1['x'], p1['y'])
-    p2T = (p2['x'], p2['y'])
-    return np.dot(np.subtract(p0T, p1T), np.subtract(p2T, p1T)) / np.dot(np.subtract(p2T, p1T),
-                                                                         np.subtract(p2T, p1T))
+sys.path.append('../')
+from src.Point import Point
 
 
-def calculateS(p1: dict, p2: dict, d: float) -> dict:
-    p1T = (p1['x'], p1['y'])
-    p2T = (p2['x'], p2['y'])
-    sT = np.add(p1T, d * np.subtract(p2T, p1T))
-    return {"x": sT[0], "y": sT[1]}
+def euclideanDistance(p1: Point, p2: Point) -> float:
+    return math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2)
 
 
-def calculateDistance(p1: dict, p2: dict, location: dict) -> list:
+def dot(p0: Point, p1: Point) -> float:
+    return float(np.dot(tuple(p0), tuple(p1)))
+
+
+def calculateD(p0: Point, p1: Point, p2: Point) -> float:
+    return dot(p0 - p1, p2 - p1) / dot(p2 - p1, p2 - p1)
+
+
+def calculateS(p1: Point, p2: Point, d: float) -> Point:
+    return p1 + (p2 - p1) * d
+
+
+def calculateDistance(p1: Point, p2: Point, location: Point) -> list:
     d = calculateD(location, p1, p2)
-    point = {"x": -1, "y": -1}
+    point = (-1, -1)
     if d <= 0:
-        point = {"x": p1['x'], "y": p1['y']}
+        point = p1
     elif d >= 1:
-        point = {"x": p2['x'], "y": p2['y']}
+        point = p2
     else:
         point = calculateS(p1, p2, d)
 
     distance = euclideanDistance(location, point)
     return [point, distance]
-
-
-def isEqual(point1: dict, point2: dict):
-    # node coordinates and way point coordinates differ after 2 decimal places.
-    return round(point1['x'], 2) == round(point2['x'], 2) and round(point1['y'], 2) == round(point2['y'], 2)
 
 
 def add_times(time1, time2):
