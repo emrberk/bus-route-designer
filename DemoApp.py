@@ -40,11 +40,13 @@ class DemoApp(cmd.Cmd):
         else:
             return True
 
-    def do_signUp(self, arg):
+    @staticmethod
+    def do_signUp(arg):
         """Create a new account"""
         user = User.createUser()
 
-    def do_listUsers(self, arg):
+    @staticmethod
+    def do_listUsers(arg):
         """List all the users in BRD ecosystem"""
         User.listUsers()
 
