@@ -1,6 +1,7 @@
 import datetime
 from src.util import Utils
 import logging
+from Route import Route
 
 
 class Schedule:
@@ -29,7 +30,7 @@ class Schedule:
         if not self.routes[id - 1].active:
             logging.error("Deleted routes cannot be updated")
             return
-        route = self.getroute(id -1)
+        route = self.getroute(id - 1)
         route.stops = stopIds
 
     def delroute(self, id):
@@ -41,8 +42,23 @@ class Schedule:
     def addLine(self, line):
         self.lines.append(line)
 
+    def getLine(self, line_id):
+        return self.lines[line_id - 1]
+
+    def updateLine(self, line_id, start: datetime.time, end: datetime.time, rep: datetime.time, route: Route,
+                   description=""):
+        line = self.getLine(line_id)
+        line.start_time = start
+        line.end_time = end
+        line.rep = rep
+        line.route = route
+        line.description = description
+
+    def delLine(self, line_id):
+        self.getLine(line_id - 1).active = False
+
     def lineinfo(self, id):
-        print(self.lines[id-1])
+        print(self.lines[id - 1])
         return self.lines[id - 1]
 
     def calculateEstimatedTimes(self, lineId):

@@ -16,10 +16,11 @@ class Line:
         self.end_time = end
         self.rep = rep
         self.route = route
+        self.active = True
 
     def __str__(self):
         return f"Line {self.id}: starts at = {self.start_time}, ends at = {self.end_time}," \
-               f" route id = {self.route.id}, description = {self.description}"
+               f" route id = {self.route.id}, description = {self.description}, active = {self.active}"
 
     def getExternalId(self):
         return self.__external_id

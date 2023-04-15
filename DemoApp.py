@@ -1,12 +1,12 @@
-import cmd, sys
+import cmd
+import datetime
+from uuid import UUID
 
 from src.Line import Line
 from src.Map import Map
+from src.Route import Route
 from src.Schedule import Schedule
 from src.user.User import User
-from src.Route import Route
-from uuid import UUID
-import datetime
 
 
 class DemoApp(cmd.Cmd):
@@ -258,6 +258,66 @@ class DemoApp(cmd.Cmd):
                 print("New line is created")
                 break
 
+    def do_updateLine(self, arg):
+        """
+        Updates the given Line in the Schedule.
+        Usage : updateLine <line_id>
+        """
+        line_id = arg.split()
+        if len(line_id) == 0:
+            print("Please provide at least one line id")
+            return
+        id = int(line_id[0])
+        if self.tokenize():
+            while True:
+                start_time_str = input("Enter start time in HH:MM format: ")
+                try:
+                    start_time = datetime.datetime.strptime(start_time_str, "%H:%M").time()
+                except ValueError:
+                    print("Invalid format! Please enter time in HH:MM format.")
+                    continue
+
+                end_time_str = input("Enter end time in HH:MM format: ")
+                try:
+                    end_time = datetime.datetime.strptime(end_time_str, "%H:%M").time()
+                except ValueError:
+                    print("Invalid format! Please enter time in HH:MM format.")
+                    continue
+
+                rep_time_str = input("Enter repetition time in Minutes: ")
+                try:
+                    rep_time = datetime.datetime.strptime(rep_time_str, "%M").time()
+                except ValueError:
+                    print("Invalid format! Please enter time in Minutes.")
+                    continue
+
+                route_str = input("Enter a route id: ")
+                try:
+                    route_id = int(route_str)
+                except ValueError:
+                    print("Invalid format! Please enter time in HH:MM format.")
+                    continue
+
+                description = input("Enter description (optional): ")
+
+                self.schedule.updateLine(id, start_time, end_time, rep_time, self.schedule.getroute(route_id),
+                                         description)
+                print("Given line is updated")
+                break
+
+    def do_delLine(self, arg):
+        """
+        Updates the given Line in the Schedule.
+        Usage : updateLine <line_id>
+        """
+        line_id = arg.split()
+        if len(line_id) == 0:
+            print("Please provide at least one line id")
+            return
+        id = int(line_id[0])
+        if self.tokenize():
+            self.schedule.delLine(id)
+
     def do_lineInfo(self, arg):
         """
         Gives detailed line information
@@ -283,6 +343,10 @@ class DemoApp(cmd.Cmd):
                 return
             stop_ids[0] = UUID(stop_ids[0])
             self.schedule.stopinfo(stop_ids[0])
+
+    @staticmethod
+    def do_exit(arg):
+        exit(0)
 
 
 if __name__ == '__main__':
