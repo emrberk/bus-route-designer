@@ -6,6 +6,7 @@ from src.Line import Line
 from src.Map import Map
 from src.Route import Route
 from src.Schedule import Schedule
+from src.Point import Point
 from src.user.User import User
 
 
@@ -34,6 +35,7 @@ class DemoApp(cmd.Cmd):
                                    self.schedule.getroute(1), "ilk line"))
 
     def tokenize(self):
+        return True
         if self.token == "":
             print("To use this functionality, you should be logged in.")
             return False
@@ -76,13 +78,20 @@ class DemoApp(cmd.Cmd):
             self.defaultMap = map
             self.schedule = Schedule(self.defaultMap)
 
-    def do_addStop(self, arg):
+    def do_shortest(self, arg):
+        node1 = input("Enter node1 ID: ")
+        node2 = input("Enter node2 ID: ")
+        shortest = self.defaultMap.shortest(node1, node2)
+        print("Path: {}, Length: {}, Time: {}".format(shortest[0], shortest[1], shortest[2]))
+
+    def do_addStop(self,arg):
         """Add a new stop on the map"""
         if self.tokenize():
             edge_id = input("Enter the edge ID: ")
-            direction = input("Enter the direction (True or False): ")
+            inputDirection = input("Enter the direction (True or False): ")
             percentage = float(input("Enter the percentage: "))
             description = input("Enter the description: ")
+            direction = True if inputDirection == 'True' else False
 
             stop_id = self.defaultMap.addstop(edge_id, direction, percentage, description)
             print(f"Stop added with ID: {stop_id}")
@@ -93,7 +102,7 @@ class DemoApp(cmd.Cmd):
             stop_id = input("Enter the stop ID: ")
             try:
                 stop = self.defaultMap.getStop(UUID(stop_id))
-                id = stop.get("id")
+                id = stop.getId()
                 self.defaultMap.delStop(id)
                 print(f" Stop {id} is deleted successfully.")
             except Exception as e:
@@ -111,10 +120,11 @@ class DemoApp(cmd.Cmd):
     def do_stopDistance(self, args):
         """finds and returns the distance between two stops."""
         if self.tokenize():
-            stopID1 = input("Enter the stop ID for first stop: ")
-            stopID2 = input("Enter the stop ID for first stop: ")
+            stopID1 = input("Enter the stop ID for the first stop: ")
+            stopID2 = input("Enter the stop ID for the second stop: ")
             try:
-                self.defaultMap.stopdistance(UUID(stopID1), UUID(stopID2))
+                meters, time = self.defaultMap.stopdistance(UUID(stopID1), UUID(stopID2))
+                print("Meters: {}, Time: {}".format(meters, time))
             except Exception as e:
                 print(f"There is no stop with id : {stopID2}")
             finally:
@@ -126,10 +136,10 @@ class DemoApp(cmd.Cmd):
         if self.tokenize():
             x = float(input("Enter the x coordinate: "))
             y = float(input("Enter the y coordinate: "))
-            location = {"x": x, "y": y}
+            location = Point({"x": x, "y": y})
             try:
                 stop_id = self.defaultMap.shorteststop(location)
-                print(self.defaultMap.getStop(UUID(stop_id)))
+                print(self.defaultMap.getStop(stop_id))
             except Exception as e:
                 print("An error happened : ", e)
 
@@ -142,7 +152,7 @@ class DemoApp(cmd.Cmd):
         if self.tokenize():
             x = float(input("Enter the x coordinate: "))
             y = float(input("Enter the y coordinate: "))
-            location = {"x": x, "y": y}
+            location = Point({"x": x, "y": y})
             try:
                 print(self.defaultMap.closestedge(location))
             except Exception as e:

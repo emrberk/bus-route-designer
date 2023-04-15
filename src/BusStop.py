@@ -1,14 +1,27 @@
 import uuid
-from Point import Point
+from src.Point import Point
 
 
 class BusStop:
-    def __init__(self, id: uuid.UUID, point: Point, source: str, destination: str, description: str):
+    def __init__(self, id: uuid.UUID, point: Point, source: str, destination: str, description: str, wayId: str):
         self.id = id
         self.point = point
         self.source = source
         self.destination = destination
         self.description = description
+        self.wayId = wayId
+
+    def getId(self) -> uuid.UUID:
+        return self.id
+
+    def setId(self, id: uuid.UUID):
+        self.id = id
+
+    def getWayId(self) -> str:
+        return self.wayId
+
+    def setWayId(self, wayId: str):
+        self.wayId = wayId
 
     def getPoint(self) -> Point:
         return self.point

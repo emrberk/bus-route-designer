@@ -1,11 +1,11 @@
 import json
 import uuid
-from queue import PriorityQueue
-from Point import Point
-from BusStop import BusStop
-from util import Utils
+from src.Point import Point
+from src.BusStop import BusStop
+from src.util import Utils
+import heapq
 
-FILE_PATH = '../maps/map.json'
+FILE_PATH = 'maps/map.json'
 JSON_STR = ''
 
 
@@ -44,7 +44,8 @@ class Map:
                 self.edges[key][index] = {
                     "to": currentEdge["to"],
                     "way": str(currentEdge["way"]),
-                    "speed": currentEdge["speed"]
+                    "speed": currentEdge["speed"],
+                    "symmetric": False
                 }
 
         # To prevent extra checks for symmetric ways, put them in edges as well
@@ -55,7 +56,8 @@ class Map:
                     self.edges[currentEdge['to']].append({
                         "to": key,
                         "way": currentEdge["way"],
-                        "speed": currentEdge["speed"]
+                        "speed": currentEdge["speed"],
+                        "symmetric": True
                     })
 
         # Will be useful
@@ -101,50 +103,40 @@ class Map:
             neighbors.append(x["to"])
         return neighbors
 
-    def shortest(self, node1: str, node2: str) -> list:
-        time = {}
-        length = {}
-        prev = {}
-        way = {}
-        inQ = {}
-        q = PriorityQueue()
-        for x in self.nodes:
-            time[x] = float('inf')
-            length[x] = float('inf')
-            prev[x] = None
-            way[x] = None
-            if x != node1:
-                q.put((float('inf'), x))
-            else:
-                q.put((0, x))
-            inQ[x] = True
-        time[node1] = 0
-        length[node1] = 0
+    def shortest(self, startNode: str, endNode: str):
+        distances = {nodeId: float('inf') for nodeId in self.edgeCosts}
+        distances[startNode] = 0
 
-        while not q.empty():
-            u = q.get()
-            if u[1] == node2:
-                break
-            inQ[u[1]] = False
-            neighborsInQ = list(filter(lambda n: inQ[n], self.getNeighbors(u[1])))
-            for neighbor in neighborsInQ:
-                newTime = time[u[1]] + self.edgeCosts[u[1]][neighbor]['time']
-                newLength = length[u[1]] + self.edgeCosts[u[1]][neighbor]['length']
-                newWayNo = self.edgeCosts[u[1]][neighbor]['wayNo']
-                if newTime < time[neighbor]:
-                    q.put((newTime, neighbor))
-                    time[neighbor] = newTime
-                    length[neighbor] = newLength
-                    way[neighbor] = newWayNo
-                    prev[neighbor] = u[1]
-        path = []
-        totalWay = []
-        current = node2
-        while current is not None:
-            path = [current] + path
-            totalWay = [way[current]] + totalWay if way[current] is not None else totalWay
-            current = prev[current]
-        return [totalWay, time[node2], length[node2]]
+        previous_nodes = {nodeId: None for nodeId in self.edgeCosts}
+
+        priority_queue = [(0, startNode)]
+
+        while priority_queue:
+            current_distance, current_node = heapq.heappop(priority_queue)
+
+            if current_node == endNode:
+                path = [endNode]
+                total_time = distances[endNode]
+                total_length = 0
+
+                while previous_nodes[path[0]] is not None:
+                    path.insert(0, previous_nodes[path[0]])
+                    total_length += self.edgeCosts[path[0]][path[1]]['length']
+
+                return path, total_time, total_length
+
+            if current_distance > distances[current_node]:
+                continue
+
+            for neighbor_node, edge_attrs in self.edgeCosts[current_node].items():
+                distance_to_neighbor = current_distance + edge_attrs['time']
+
+                if distance_to_neighbor < distances[neighbor_node]:
+                    distances[neighbor_node] = distance_to_neighbor
+                    previous_nodes[neighbor_node] = current_node
+                    heapq.heappush(priority_queue, (distance_to_neighbor, neighbor_node))
+
+        return None, None, None
 
     def getPointPercentage(self, point: Point, wayNo: str, segmentStart: int) -> float:
         way = self.ways[wayNo]
@@ -188,8 +180,9 @@ class Map:
         for edgeSource, edges in self.edges.items():
             for edge in edges:
                 if edge['way'] == edgeId:
-                    src = edgeSource if direction else edge['to']
-                    dest = edge['to'] if direction else edgeSource
+                    takeStraight = direction != edge['symmetric']
+                    src = edgeSource if takeStraight else edge['to']
+                    dest = edge['to'] if takeStraight else edgeSource
                     break
             if len(src) > 0:
                 break
@@ -204,15 +197,15 @@ class Map:
                 d = lengthInCurrentSegment / segmentLength
                 point = Utils.calculateS(directedEdge[i], directedEdge[i + 1], d)
                 stopId = uuid.uuid4()
-                stop = BusStop(stopId, point, src, dest, description)
+                stop = BusStop(stopId, point, src, dest, description, edgeId)
                 self.setStop(stopId, stop)
                 return stopId
 
-    def stopdistance(self, stop1Id: uuid.UUID, stop2Id: uuid.UUID) -> float:
-        if stop1Id == stop2Id:
-            return 0
+    def stopdistance(self, stop1Id: uuid.UUID, stop2Id: uuid.UUID) -> tuple:
         stop1 = self.stops[stop1Id]
         stop2 = self.stops[stop2Id]
+        if stop1.getPoint() == stop2.getPoint():
+            return 0, 0
         stop1Target = ''
         stop2Source = ''
         for nodeNumber, nodeCoordinates in self.nodes.items():
@@ -221,10 +214,11 @@ class Map:
             if nodeCoordinates == self.nodes[stop2.getSource()]:
                 stop2Source = nodeNumber
 
-        distanceBetweenNodes = self.shortest(stop1Target, stop2Source)[2]
+        [_, time, distanceBetweenNodes] = self.shortest(stop1Target, stop2Source)
         walk1 = Utils.euclideanDistance(stop1.point, self.nodes[stop1Target])
         walk2 = Utils.euclideanDistance(stop2.point, self.nodes[stop2Source])
-        return distanceBetweenNodes + walk1 + walk2
+        walkTime = (walk1 + walk2) / self.getWaySpeed(stop1.getWayId())
+        return distanceBetweenNodes + walk1 + walk2, time + walkTime
 
     def shorteststop(self, location: Point) -> uuid.UUID:
         shortestId = ''
@@ -241,3 +235,8 @@ class Map:
             print("There is no stop in this area.")
         for stop in self.stops:
             print(self.getStop(stop))
+
+if __name__ == "__main__":
+    m = Map()
+    print(m.shortest('0', '32'))
+    print()

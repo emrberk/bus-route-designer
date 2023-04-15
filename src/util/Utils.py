@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import datetime
 
-sys.path.append('../')
+
 from src.Point import Point
 
 

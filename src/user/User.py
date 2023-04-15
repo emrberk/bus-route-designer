@@ -116,10 +116,3 @@ class User:
             else:
                 print(f"There is no user named {usrname}. If you wish to create new account, you need to type signUp.")
                 return None
-
-if __name__ == '__main__':
-    user = User('asd', 'asd', 'asd', 'asd')
-    token = user.login('asd')
-    print(token)
-    user.logout()
-    print(user.sessionToken)
