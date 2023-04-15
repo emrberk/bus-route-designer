@@ -45,10 +45,10 @@ class DemoApp(cmd.Cmd):
         """Create a new account"""
         user = User.createUser()
 
-    @staticmethod
-    def do_listUsers(arg):
+    def do_listUsers(self, arg):
         """List all the users in BRD ecosystem"""
-        User.listUsers()
+        if self.tokenize():
+            User.listUsers()
 
     def do_login(self, arg):
         """login to site : email - password authentication"""
@@ -77,14 +77,15 @@ class DemoApp(cmd.Cmd):
             self.schedule = Schedule(self.defaultMap)
 
     def do_addStop(self, arg):
-        "Add a new stop on the map"
-        edge_id = input("Enter the edge ID: ")
-        direction = input("Enter the direction (True or False): ")
-        percentage = float(input("Enter the percentage: "))
-        description = input("Enter the description: ")
+        """Add a new stop on the map"""
+        if self.tokenize():
+            edge_id = input("Enter the edge ID: ")
+            direction = input("Enter the direction (True or False): ")
+            percentage = float(input("Enter the percentage: "))
+            description = input("Enter the description: ")
 
-        stop_id = self.defaultMap.addstop(edge_id, direction, percentage, description)
-        print(f"Stop added with ID: {stop_id}")
+            stop_id = self.defaultMap.addstop(edge_id, direction, percentage, description)
+            print(f"Stop added with ID: {stop_id}")
 
     def do_delStop(self, arg):
         """Delete a stop from the map"""
@@ -209,17 +210,19 @@ class DemoApp(cmd.Cmd):
 
     def do_showRoutes(self, arg):
         """lists all the routes in Schedule"""
-        if not self.schedule.routes:
-            print("There is no Routes in the schedule now.")
-        for route in self.schedule.routes:
-            print(route)
+        if self.tokenize():
+            if not self.schedule.routes:
+                print("There is no Routes in the schedule now.")
+            for route in self.schedule.routes:
+                print(route)
 
     def do_showLines(self, arg):
         """lists all the lines in Schedule."""
-        if not self.schedule.lines:
-            print("There is no Line in the schedule now.")
-        for line in self.schedule.lines:
-            print(line)
+        if self.tokenize():
+            if not self.schedule.lines:
+                print("There is no Line in the schedule now.")
+            for line in self.schedule.lines:
+                print(line)
 
     def do_newLine(self, arg):
         """Creates a new Line in the Schedule."""
@@ -319,6 +322,7 @@ class DemoApp(cmd.Cmd):
         id = int(line_id[0])
         if self.tokenize():
             self.schedule.delLine(id)
+            print(f"Given Line with id:{line_id} is deleted.")
 
     def do_lineInfo(self, arg):
         """
