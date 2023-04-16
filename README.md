@@ -1,6 +1,7 @@
 # Bus Route Designer
 
-A short description of the project.
+This project is a bus route organizer. It includes features such as finding
+the shortest routes and finding the closest stops.
 
 ## Table of Contents
 
@@ -8,6 +9,12 @@ A short description of the project.
 - [Usage](#usage)
 - [Contributing](#contributing)
 - [Content](#content)
+- [Project Selection](#project-selection)
+
+## Project Selection
+
+We choose this project since it can be useful in some cities which
+cannot use location systems, our project can be used offline as well.
 
 ## Requirements
 
