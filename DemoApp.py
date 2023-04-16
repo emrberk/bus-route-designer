@@ -35,7 +35,6 @@ class DemoApp(cmd.Cmd):
                                    self.schedule.getroute(1), "ilk line"))
 
     def tokenize(self):
-        return True
         if self.token == "":
             print("To use this functionality, you should be logged in.")
             return False
@@ -240,18 +239,22 @@ class DemoApp(cmd.Cmd):
     def do_showRoutes(self, arg):
         """lists all the routes in Schedule"""
         if self.tokenize():
-            if not self.schedule.routes:
+            activeRoutes = [obj for obj in self.schedule.routes if obj.active]
+            if not activeRoutes:
                 print("There is no Routes in the schedule now.")
             for route in self.schedule.routes:
-                print(route)
+                if route.active:
+                    print(route)
 
     def do_showLines(self, arg):
         """lists all the lines in Schedule."""
         if self.tokenize():
-            if not self.schedule.lines:
+            activeLines = [obj for obj in self.schedule.lines if obj.active]
+            if not activeLines:
                 print("There is no Line in the schedule now.")
             for line in self.schedule.lines:
-                print(line)
+                if line.active:
+                    print(line)
 
     def do_newLine(self, arg):
         """Creates a new Line in the Schedule."""

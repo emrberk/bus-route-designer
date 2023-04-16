@@ -1,8 +1,7 @@
-import math
-import sys
-import numpy as np
 import datetime
+import math
 
+import numpy as np
 
 from src.Point import Point
 
@@ -56,3 +55,11 @@ def time_difference(start, end):
 
 def getTimeStr(time):
     return time.strftime("%H:%M")
+
+
+def minToTime(mins):
+    time = datetime.timedelta(minutes=mins)
+    hour = int(time.seconds / 3600)
+    minute = int((time.seconds % 3600) / 60)
+    second = time.seconds % 60
+    return "{:02d}:{:02d}:{:02d}".format(hour, minute, second)

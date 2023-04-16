@@ -62,20 +62,34 @@ class Schedule:
         print(self.lines[id - 1])
         return self.lines[id - 1]
 
-    def calculateEstimatedTimes(self, lineId):
+    def calculateEstimatedTimes(self, lineId, expectedStopId):
         line = self.lines[lineId - 1]
+        expectedIndex = line.route.stops.index(expectedStopId)
         start = line.start_time
         end = line.end_time
         times = []
+        extra_times = [0] * len(line.route.stops)
+        for stopId in line.route.stops:
+            index = line.route.stops.index(stopId)
+            stop = self.map.getStop(stopId)
+            if index - 1 >= 0:
+                extra_times[index] += extra_times[index - 1]
+            if index + 1 != len(line.route.stops):
+                nextStop = self.map.getStop(line.route.stops[index + 1])
+                extra_time = self.map.stopdistance(stop.id, nextStop.id)[1]
+                extra_times[index + 1] += extra_time
         while Utils.time_difference(start, end) > datetime.time(minute=0):
-            times.append(Utils.getTimeStr(Utils.add_times(start, line.rep)))
+            time = Utils.add_times(start, line.rep)
+            if extra_times[expectedIndex]:
+                time = Utils.add_times(time, Utils.minToTime(extra_times[expectedIndex]))
+            times.append(time)
             start = Utils.add_times(start, line.rep)
         return times
 
-    def printLineReport(self, lines):
+    def printLineReport(self, lines, stopId):
         for line in lines:
             print(f"Line {line} is passing from this stop")
-            times = self.calculateEstimatedTimes(line)
+            times = self.calculateEstimatedTimes(line, stopId)
             print(f"Estimated times :")
             for time in times:
                 print(f"at {time}")
@@ -90,4 +104,4 @@ class Schedule:
                 index += 1
 
         print(f"STOP INFO {id}:\n Passed lines:")
-        self.printLineReport(included_lines)
+        self.printLineReport(included_lines, id)
