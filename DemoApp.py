@@ -4,9 +4,9 @@ from uuid import UUID
 
 from src.Line import Line
 from src.Map import Map
+from src.Point import Point
 from src.Route import Route
 from src.Schedule import Schedule
-from src.Point import Point
 from src.user.User import User
 
 
@@ -45,7 +45,7 @@ class DemoApp(cmd.Cmd):
     @staticmethod
     def do_signUp(arg):
         """Create a new account"""
-        user = User.createUser()
+        User.createUser()
 
     def do_listUsers(self, arg):
         """List all the users in BRD ecosystem"""
@@ -71,20 +71,37 @@ class DemoApp(cmd.Cmd):
             print("you are logged out.")
             self.token = ""
 
-    def do_openMap(self, map):
-        """load a map or use default one"""
-        # TODO: düzeltilecek
+    def do_openMap(self, arg):
+        """
+        load a map or use default one
+        Usage : openMap <(optional) path> <(optional) jsonStr>
+        """
+        args = arg.split()
+        path = args[0] if len(args) > 0 else None
+        jsonStr = args[1] if len(args) > 1 else None
         if self.tokenize():
-            self.defaultMap = map
-            self.schedule = Schedule(self.defaultMap)
+            try:
+                if path:
+                    self.defaultMap = Map(path=path)
+                    self.schedule = Schedule(self.defaultMap)
+                    return
+                if jsonStr:
+                    self.defaultMap = Map(jsonStr=jsonStr)
+                    self.schedule = Schedule(self.defaultMap)
+                    return
+                else:
+                    print("You are using default Map in maps/Map.json")
+            except Exception as e:
+                print("An error happened while opening map", e)
 
     def do_shortest(self, arg):
-        node1 = input("Enter node1 ID: ")
-        node2 = input("Enter node2 ID: ")
-        shortest = self.defaultMap.shortest(node1, node2)
-        print("Path: {}, Length: {}, Time: {}".format(shortest[0], shortest[1], shortest[2]))
+        if self.tokenize():
+            node1 = input("Enter node1 ID: ")
+            node2 = input("Enter node2 ID: ")
+            shortest = self.defaultMap.shortest(node1, node2)
+            print("Path: {}, Length: {}, Time: {}".format(shortest[0], shortest[1], shortest[2]))
 
-    def do_addStop(self,arg):
+    def do_addStop(self, arg):
         """Add a new stop on the map"""
         if self.tokenize():
             edge_id = input("Enter the edge ID: ")
@@ -132,13 +149,15 @@ class DemoApp(cmd.Cmd):
 
     def do_shortestStop(self, arg):
         """Gives the closest stop from given location."""
-        # TODO: bura hata atıyor düzeltilecek
         if self.tokenize():
             x = float(input("Enter the x coordinate: "))
             y = float(input("Enter the y coordinate: "))
             location = Point({"x": x, "y": y})
             try:
                 stop_id = self.defaultMap.shorteststop(location)
+                if stop_id == '':
+                    print("There is no bus stop in the map now. Please add bus stops first.")
+                    return
                 print(self.defaultMap.getStop(stop_id))
             except Exception as e:
                 print("An error happened : ", e)
