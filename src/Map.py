@@ -1,9 +1,12 @@
+import heapq
 import json
 import uuid
-from src.Point import Point
+
 from src.BusStop import BusStop
+from src.Exception.ErrorCodes import ErrorCodes
+from src.Exception.StopException import StopNotFoundException
+from src.Point import Point
 from src.util import Utils
-import heapq
 
 FILE_PATH = 'maps/map.json'
 JSON_STR = ''
@@ -75,7 +78,10 @@ class Map:
         self.stops[stopId] = stop
 
     def getStop(self, stopId: uuid.UUID):
-        return self.stops[stopId]
+        if self.stops[stopId]:
+            return self.stops[stopId]
+        else:
+            raise StopNotFoundException(ErrorCodes.ByStop.STOP_NOT_FOUND, f"Stop with id {stopId} cannot found.")
 
     def delStop(self, stopId: uuid.UUID):
         del self.stops[stopId]

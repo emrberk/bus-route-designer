@@ -1,6 +1,8 @@
 import datetime
-import logging
 
+from src.Exception.ErrorCodes import ErrorCodes
+from src.Exception.LineException import *
+from src.Exception.RouteException import *
 from src.Route import Route
 from src.util import Utils
 
@@ -15,39 +17,50 @@ class Schedule:
         for route in routes:
             for stop in route.stops:
                 if stop not in self.map.stops:
-                    logging.error(f"Given stop id with {stop} is not in the map")
-                    exit(500)
+                    raise RouteStopIdNotFoundException(ErrorCodes.ByRoute.ROUTE_STOP_ID_NOT_FOUND,
+                                                       f"Given stop id with {stop} is not in the map")
 
         for route in routes:
             self.routes.append(route)
+            return route
 
     def getroute(self, id):
         if not self.routes[id - 1].active:
-            logging.error("This route is deleted by an Admin")
-            return
+            raise RouteDeletedException(message="This route is deleted by an Admin",
+                                        error_code=ErrorCodes.ByRoute.ROUTE_DELETED)
+        if not self.routes[id - 1]:
+            raise RouteNotFoundException(ErrorCodes.ByRoute.ROUTE_NOT_FOUND, f"Route with id {id} cannot found")
         return self.routes[id - 1]
 
     def updateroute(self, id, stopIds):
         if not self.routes[id - 1].active:
-            logging.error("Deleted routes cannot be updated")
-            return
+            raise RouteDeletedException(message="This route is deleted by an Admin",
+                                        error_code=ErrorCodes.ByRoute.ROUTE_DELETED)
         route = self.getroute(id - 1)
         route.stops = stopIds
 
     def delroute(self, id):
-        self.routes[id - 1].active = False
-
-    def getStopDescr(self, route, index):
-        return self.map.getStop(route.getStop(index))
+        if self.routes[id - 1] and self.routes[id - 1].active != False:
+            self.routes[id - 1].active = False
+        else:
+            raise RouteDeletedException(ErrorCodes.ByRoute.ROUTE_ALREADY_DELETED, "This route is already deleted")
 
     def addLine(self, line):
         self.lines.append(line)
 
     def getLine(self, line_id):
+        if not self.lines[line_id - 1].active:
+            raise LineDeletedException(message="This line is deleted by an Admin",
+                                       error_code=ErrorCodes.ByLine.LINE_DELETED)
+        if not self.lines[line_id - 1]:
+            raise LineNotFoundException(ErrorCodes.ByLine.LINE_NOT_FOUND, f"Line with id {line_id} cannot found")
         return self.lines[line_id - 1]
 
     def updateLine(self, line_id, start: datetime.time, end: datetime.time, rep: datetime.time, route: Route,
                    description=""):
+        if not self.lines[line_id - 1].active:
+            raise LineDeletedException(message="This line is deleted by an Admin",
+                                       error_code=ErrorCodes.ByLine.LINE_DELETED)
         line = self.getLine(line_id)
         line.start_time = start
         line.end_time = end
@@ -56,7 +69,10 @@ class Schedule:
         line.description = description
 
     def delLine(self, line_id):
-        self.getLine(line_id - 1).active = False
+        if self.lines[line_id - 1] and self.lines[line_id - 1].active != False:
+            self.lines[line_id - 1].active = False
+        else:
+            raise LineDeletedException(ErrorCodes.ByLine.LINE_DELETED, "This line is already deleted")
 
     def lineinfo(self, id):
         print(self.lines[id - 1])
