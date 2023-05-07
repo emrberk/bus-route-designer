@@ -1,6 +1,7 @@
 import json
 import queue
 import threading
+import socket
 
 from src.Map import Map
 from src.Schedule import Schedule
@@ -11,8 +12,10 @@ from src.server.ServerObjects import ServerObjects
 class Agent(threading.Thread):
     def __init__(self, conn, addr):
         super().__init__()
+        self.targetPort = None  # will be set upon the first message
         self.conn = conn
         self.addr = addr
+        self.notificationSocket = None
         self.messageQueue = queue.Queue()
         self.daemon = True
         self._stop_event = threading.Event()
@@ -47,7 +50,17 @@ class Agent(threading.Thread):
                 self.conn.sendall(ex_str.encode())
 
     def run(self):
-        print(f'Client {self.addr} is connected.')
+        print(f'Client {self.addr} is connected to server.')
+        # Take client socket port information
+        message = self.conn.recv(1024)
+        targetPort = int(message.decode())
+        self.targetPort = targetPort
+        # Connect to that socket (later will be used to send notifications)
+        notificationSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print('Server will connect to notifications ', (self.addr[0], self.targetPort))
+        notificationSocket.connect((self.addr[0], self.targetPort))
+        self.notificationSocket = notificationSocket
+
         self.login()
         while not self._stop_event.is_set():
             message = "What do you want me to do? : \n"
