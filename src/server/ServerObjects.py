@@ -1,5 +1,6 @@
 import threading
 
+from queue import Queue
 from src.Map import Map
 from src.user.User import User
 
@@ -8,6 +9,7 @@ PATH = '../../maps/map.json'
 
 class ServerObjects:
     class ByServer:
+        notificationQueue = Queue()
         addresses = []
         threads = []
         users = []

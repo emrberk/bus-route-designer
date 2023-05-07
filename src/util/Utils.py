@@ -95,3 +95,30 @@ def compare_str(strs, str2):
             if str1 == str2[:length]:
                 return [True, length]
     return [False]
+
+
+def sendDataAsChunks(s, data):
+    encoded_data = data.encode()
+    numChunks = math.ceil(len(data) // 1024)
+    chunks = []
+    for i in range(numChunks):
+        if len(encoded_data) >= 1024:
+            chunks.append(encoded_data[:1024])
+            encoded_data = encoded_data[1024:]
+        else:
+            chunks.append(encoded_data)
+
+    s.send(f'{numChunks}'.encode())
+    for chunk in chunks:
+        s.send(chunk)
+
+
+def getDataAsChunks(s):
+    data = s.recv(1024)
+    numChunks = data.decode('utf-8').replace("\r", "").replace("\n", "")
+    receivedPackets = []
+    while len(receivedPackets) < numChunks:
+        packet = s.recv(1024)
+        receivedPackets.append(packet)
+    receivedPackets = b''.join(receivedPackets)
+    return receivedPackets.decode('utf-8').replace("\r", "").replace("\n", "")

@@ -1,22 +1,22 @@
 import json
-import queue
 import threading
 
+from src.util import Utils
 from src.Map import Map
 from src.Schedule import Schedule
 from src.agent.AgentEnum import AgentEnum as ae
+from src.agent.NotificationHandler import NotificationHandler
 from src.server.ServerObjects import ServerObjects
 
 
 class Agent(threading.Thread):
     def __init__(self, conn, addr):
-        super().__init__()
         self.conn = conn
         self.addr = addr
-        self.messageQueue = queue.Queue()
         self.daemon = True
         self._stop_event = threading.Event()
-        self.newMessage = threading.Event()
+        self.notificationHandler = NotificationHandler(conn, addr)
+        super().__init__()
 
     def stop(self):
         self._stop_event.set()
@@ -24,63 +24,51 @@ class Agent(threading.Thread):
     def login(self):
         while True:
             try:
-                self.conn.sendall("Please login to system :\n".encode())
-                self.conn.sendall("Username : ".encode())
-                usrname = self.conn.recv(1024)
-                usrname = usrname.decode('utf-8')
-                usrname = usrname.replace("\r", "").replace("\n", "")
+                Utils.sendDataAsChunks(self.conn, "Please login to system :\n")
+                Utils.sendDataAsChunks(self.conn, "Username : ")
+                usrname = Utils.getDataAsChunks(self.conn)
                 names = [usr.username for usr in ServerObjects.ByUser.users]
                 if usrname not in names:
-                    self.conn.sendall(f"No user with username {usrname}\n".encode())
+                    Utils.sendDataAsChunks(self.conn, f"No user with username {usrname}\n")
                     continue
                 index = names.index(usrname)
-                self.conn.sendall("Password : ".encode())
-                passwd = self.conn.recv(1024)
-                passwd = passwd.decode('utf-8')
-                passwd = passwd.replace("\r", "").replace("\n", "")
+                Utils.sendDataAsChunks(self.conn, "Password : ")
+                passwd = Utils.getDataAsChunks(self.conn)
                 user = ServerObjects.ByUser.users[index]
                 token = user.login(passwd)
                 if token:
                     return True
             except Exception as e:
-                ex_str = str(e)
-                self.conn.sendall(ex_str.encode())
+                Utils.sendDataAsChunks(self.conn, e)
+                self.conn.close()
 
     def run(self):
+        self.notificationHandler.start()
         print(f'Client {self.addr} is connected.')
         self.login()
         while not self._stop_event.is_set():
-            message = "What do you want me to do? : \n"
-            message_bytes = message.encode()
-            self.conn.sendall(message_bytes)
-            data = self.conn.recv(1024)
-            response = data.decode()
+            Utils.sendDataAsChunks(self.conn, "What do you want me to do? : \n")
+
+            response = Utils.getDataAsChunks(self.conn)
             response = response.split()
-            if self.newMessage.is_set():
-                print(self.messageQueue.get())
             if response[0] == ae.ADD_SCHEDULE:
                 ServerObjects.ByThread.addScheduleLock.acquire()
                 created_map = Map(response[1])
                 schedule = Schedule(created_map)
                 ServerObjects.ByServer.schedules.append(schedule)
-                self.messageQueue.put(f"Thread {threading.get_ident()} added a new schedule on Map")
-                self.newMessage.set()
+                ServerObjects.ByServer.notificationQueue.put(f"Thread {threading.get_ident()} added a new schedule on Map")
                 ServerObjects.ByThread.addScheduleLock.release()
             if response[0] == ae.ADD_MAP:
                 ServerObjects.ByThread.addMapLock.acquire()
                 created_map = Map(response[1])
                 ServerObjects.ByServer.maps.append(created_map)
-                self.messageQueue.put(f"Thread {threading.get_ident()} added a new schedule on Map")
-                self.newMessage.set()
+                ServerObjects.ByServer.notificationQueue.put(f"Thread {threading.get_ident()} added a new schedule on Map")
                 ServerObjects.ByThread.addMapLock.release()
             if response[0] == ae.SHOW_ALL_THREADS:
                 json_data = json.dumps(ServerObjects.ByServer.addresses)
-                message_bytes = json_data.encode()
-                self.conn.sendall(message_bytes)
-                self.conn.send("\n".encode())
+                Utils.sendDataAsChunks(self.conn, json_data + '\n')
             if response[0] == ae.LIST_MAPS:
                 mapIds = [str(maps.id) for maps in ServerObjects.ByServer.maps]
                 mapIds = list(set(mapIds))
-                message_bytes = ' '.join(mapIds).encode()
-                self.conn.sendall(message_bytes)
-                self.conn.send("\n".encode())
+                message = ' '.join(mapIds)
+                Utils.sendDataAsChunks(self.conn, message + '\n')

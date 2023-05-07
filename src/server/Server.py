@@ -3,6 +3,7 @@ import queue
 import socket
 import threading
 import sys
+import signal
 sys.path.append('../../')
 from src.agent.Agent import Agent
 from src.server.ServerObjects import ServerObjects
@@ -15,6 +16,10 @@ class Server:
         self.messageQueue = queue.Queue()
         self.args = parser.parse_args()
         self.addScheduleLock = threading.Lock()
+        self.s = None
+
+        # Close opened ports when Ctrl-C pressed
+        signal.signal(signal.SIGINT, self.interruptHandler)
 
     def printMessages(self):
         while True:
@@ -30,6 +35,7 @@ class Server:
     def startServer(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind(('localhost', self.args.port))
+            self.s = s
             s.listen()
 
             print(f'TCP server is listening on port {self.args.port}...')
@@ -40,6 +46,10 @@ class Server:
                 newThread = Agent(conn, addr)
                 ServerObjects.ByServer.threads.append(newThread)
                 newThread.start()
+
+    def interruptHandler(self, signum, frame):
+        self.s.close()
+        exit(1)
 
 
 if __name__ == '__main__':
