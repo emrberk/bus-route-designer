@@ -10,5 +10,6 @@ class NotificationHandler(threading.Thread):
         super().__init__()
 
     def run(self):
-        message = ServerObjects.ByServer.notificationQueue.get()
-        Utils.sendDataAsChunks(self.socket, message)
+        while True:  # TODO: handle join with event
+            message = ServerObjects.ByServer.notificationQueue.get()
+            Utils.sendDataAsChunks(self.socket, message)
