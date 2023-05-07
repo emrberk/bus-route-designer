@@ -1,6 +1,10 @@
 import hashlib
 import uuid
+
+from src.Exception.ErrorCodes import ErrorCodes
+from src.Exception.UserException import PasswordException
 from src.util.Validators import *
+
 
 class User:
     users = []
@@ -48,7 +52,7 @@ class User:
             self.sessionToken = token
             return token
         else:
-            raise Exception('Password is invalid.')
+            raise PasswordException(ErrorCodes.ByUser.INVALID_PASSWORD, 'Password is invalid. \n')
 
     def checkSession(self, token):
         return self.sessionToken is not None and self.sessionToken == token

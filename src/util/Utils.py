@@ -1,4 +1,5 @@
 import datetime
+import json
 import math
 
 import numpy as np
@@ -63,3 +64,34 @@ def minToTime(mins):
     minute = int((time.seconds % 3600) / 60)
     second = time.seconds % 60
     return "{:02d}:{:02d}:{:02d}".format(hour, minute, second)
+
+
+def read_json_input():
+    while True:
+        try:
+            path = input("Enter the path of Json: ")
+            file = open(path)
+            data = json.load(file)
+            file.close()
+            return data
+        except ValueError:
+            print("Invalid JSON object. Try again.")
+
+
+def parse_json_input(path):
+    try:
+        file = open(path)
+        data = json.load(file)
+        file.close()
+        return data
+    except ValueError:
+        print("Invalid JSON object. Try again.")
+
+
+def compare_str(strs, str2):
+    for str1 in strs:
+        length = len(str1)
+        if len(str2) >= length:
+            if str1 == str2[:length]:
+                return [True, length]
+    return [False]

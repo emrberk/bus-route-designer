@@ -8,12 +8,16 @@ from src.Exception.StopException import StopNotFoundException
 from src.Point import Point
 from src.util import Utils
 
-FILE_PATH = 'maps/map.json'
+FILE_PATH = './maps/map.json'
 JSON_STR = ''
 
 
 class Map:
+    counter = 0
+
     def __init__(self, path=FILE_PATH, jsonStr=JSON_STR):
+        Map.counter += 1
+        self.id = Map.counter
         data = {}
         if not len(jsonStr):
             file = open(path)

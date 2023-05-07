@@ -12,3 +12,8 @@ class ErrorCodes:
     class ByLine:
         LINE_NOT_FOUND = 1200
         LINE_DELETED = 1201
+
+    class ByUser:
+        USER_NOT_FOUND = 1300
+        WRONG_PASSWORD = 1301
+        INVALID_PASSWORD = 1302
