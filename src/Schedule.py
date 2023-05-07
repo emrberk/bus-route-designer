@@ -22,7 +22,7 @@ class Schedule:
             for stop in route.stops:
                 if stop not in self.map.stops:
                     raise RouteStopIdNotFoundException(ErrorCodes.ByRoute.ROUTE_STOP_ID_NOT_FOUND,
-                                                       f"Given stop id with {stop} is not in the map")
+                                                       f"Given stop id with {stop} is not in the map\n")
 
         for route in routes:
             self.routes.append(route)
@@ -84,8 +84,13 @@ class Schedule:
         else:
             raise LineDeletedException(ErrorCodes.ByLine.LINE_DELETED, "This line is already deleted")
 
+    def listlines(self):
+        activeLines = [obj for obj in self.lines if obj.active]
+        if not activeLines:
+            return "There is no Line in the schedule now."
+        return activeLines
+
     def lineinfo(self, id):
-        print(self.lines[id - 1])
         return self.lines[id - 1]
 
     def calculateEstimatedTimes(self, lineId, expectedStopId):

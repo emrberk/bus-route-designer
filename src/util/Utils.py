@@ -126,3 +126,13 @@ def getDataAsChunks(s):
 
 def getUtfPackage(package):
     return package.decode('utf-8').replace("\r", "").replace("\n", "")
+
+
+def concat(list):
+    string = ""
+    if type(list) == str:
+        return list
+    for i in range(len(list)):
+        string += str(list[i])
+        string += "\n"
+    return string
