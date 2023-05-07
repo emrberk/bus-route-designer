@@ -241,7 +241,9 @@ class Map:
         return shortestId
 
     def getStopsInfo(self):
+        stopList = []
         if self.stops == {}:
-            print("There is no stop in this area.")
+            return "There is no stop in this area."
         for stop in self.stops:
-            print(self.getStop(stop))
+            stopList.append(self.getStop(stop))
+        return stopList

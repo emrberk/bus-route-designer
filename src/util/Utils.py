@@ -122,3 +122,7 @@ def getDataAsChunks(s):
         receivedPackets.append(packet)
     receivedPackets = b''.join(receivedPackets)
     return receivedPackets.decode('utf-8').replace("\r", "").replace("\n", "")
+
+
+def getUtfPackage(package):
+    return package.decode('utf-8').replace("\r", "").replace("\n", "")

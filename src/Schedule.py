@@ -8,7 +8,11 @@ from src.util import Utils
 
 
 class Schedule:
+    counter = 0
+
     def __init__(self, map):
+        Schedule.counter += 1
+        self.id = Schedule.counter
         self.lines = []
         self.routes = []
         self.map = map
@@ -44,6 +48,12 @@ class Schedule:
             self.routes[id - 1].active = False
         else:
             raise RouteDeletedException(ErrorCodes.ByRoute.ROUTE_ALREADY_DELETED, "This route is already deleted")
+
+    def listroutes(self):
+        activeRoutes = [obj for obj in self.routes if obj.active]
+        if not activeRoutes:
+            return "There is no Routes in the schedule now."
+        return activeRoutes
 
     def addLine(self, line):
         self.lines.append(line)
