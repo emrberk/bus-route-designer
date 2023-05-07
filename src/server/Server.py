@@ -2,7 +2,8 @@ import argparse
 import queue
 import socket
 import threading
-
+import sys
+sys.path.append('../../')
 from src.agent.Agent import Agent
 from src.server.ServerObjects import ServerObjects
 

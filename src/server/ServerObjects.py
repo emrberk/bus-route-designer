@@ -3,7 +3,7 @@ import threading
 from src.Map import Map
 from src.user.User import User
 
-PATH = '/Users/macbookpro/Desktop/METU/445/bus-route-designer/maps/map.json'
+PATH = '../../maps/map.json'
 
 
 class ServerObjects:

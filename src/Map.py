@@ -8,7 +8,7 @@ from src.Exception.StopException import StopNotFoundException
 from src.Point import Point
 from src.util import Utils
 
-FILE_PATH = './maps/map.json'
+FILE_PATH = '../../maps/map.json'
 JSON_STR = ''
 
 
