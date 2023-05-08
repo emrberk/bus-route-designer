@@ -11,11 +11,11 @@ PATH = '../../maps/map.json'
 
 class ServerObjects:
     class ByServer:
-        notificationQueue = Queue()
         addresses = []
         threads = []
         users = []
         schedules = []
+        notifications = {}
         maps = [Map(PATH)]
         s1 = maps[0].addstop('1', True, 100, 't1')
         s2 = maps[0].addstop('2', True, 100, 't2')

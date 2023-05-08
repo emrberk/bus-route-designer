@@ -21,6 +21,7 @@ class Server:
         # Close opened ports when Ctrl-C pressed
         signal.signal(signal.SIGINT, self.interruptHandler)
 
+    """
     def printMessages(self):
         while True:
             if not self.messageQueue.empty():
@@ -31,6 +32,7 @@ class Server:
                     break
             else:
                 break
+    """
 
     def startServer(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -43,6 +45,7 @@ class Server:
             while True:
                 conn, addr = s.accept()
                 ServerObjects.ByServer.addresses.append(addr)
+                ServerObjects.ByServer.notifications[addr] = queue.Queue()
                 newThread = Agent(conn, addr)
                 ServerObjects.ByServer.threads.append(newThread)
                 newThread.start()

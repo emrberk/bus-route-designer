@@ -1,7 +1,8 @@
 import threading
 
-from src.util import Utils
 from src.server.ServerObjects import ServerObjects
+from src.util.Utils import *
+
 
 class NotificationHandler(threading.Thread):
     def __init__(self, socket, peer):
@@ -11,5 +12,5 @@ class NotificationHandler(threading.Thread):
 
     def run(self):
         while True:  # TODO: handle join with event
-            message = ServerObjects.ByServer.notificationQueue.get()
-            Utils.sendDataAsChunks(self.socket, message)
+            message = ServerObjects.ByServer.notifications[self.peer].get()
+            sendData(self.socket, message)

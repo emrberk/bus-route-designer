@@ -3,8 +3,10 @@ import socket
 import threading
 import sys
 import signal
+import json
 sys.path.append('../../')
 
+from src.util import Utils
 from src.client.Listener import Listener
 from src.client.Sender import Sender
 from src.client.ClientObjects import ClientObjects
@@ -23,7 +25,7 @@ class Client:
 
         parser = argparse.ArgumentParser()
         parser.add_argument(
-            '-h', '--host', help="Target host address", type=str, required=True
+            '-H', '--host', help="Target host address", type=str, required=True
         )
         parser.add_argument(
             '-p', '--port', help="Target port number", type=int, required=True
@@ -51,14 +53,19 @@ class Client:
 
         while True:
             userInput = input()
-            ClientObjects.messageQueue.put(userInput)
+            if userInput == 'new':
+                filePath = userInput[3:]
+                file = open(filePath)
+                jsonFile = json.load(file)
+                userInput = f"new {json.dumps(jsonFile)}"
+            packets = Utils.divideIntoPackets(userInput)
+            for packet in packets:
+                ClientObjects.messageQueue.put(packet)
 
     def interruptHandler(self, signum, frame):
         self.killSender.set()
         self.killListener.set()
         self.socket.close()
-        self.listener.join()
-        self.sender.join()
         exit(1)
 
 

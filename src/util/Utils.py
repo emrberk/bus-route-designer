@@ -97,35 +97,40 @@ def compare_str(strs, str2):
     return [False]
 
 
-def sendDataAsChunks(s, data):
-    encoded_data = data.encode()
-    numChunks = math.ceil(len(data) // 1024)
+def divideIntoPackets(message):
+    message = message.replace('\n', '').replace('\r', '')
+    encodedMessage = message.encode()
+    numChunks = math.ceil(len(encodedMessage) / 1024)
     chunks = []
     for i in range(numChunks):
-        if len(encoded_data) >= 1024:
-            chunks.append(encoded_data[:1024])
-            encoded_data = encoded_data[1024:]
+        if len(encodedMessage) >= 1024:
+            chunks.append(encodedMessage[:1024])
+            encodedMessage = encodedMessage[1024:]
         else:
-            chunks.append(encoded_data)
+            chunks.append(encodedMessage)
+    if len(chunks) > 1:
+        chunks = [f"S-{len(chunks)}".encode()] + chunks
+    return chunks
 
-    s.send(f'{numChunks}'.encode())
+
+def sendData(s, data):
+    chunks = divideIntoPackets(data)
     for chunk in chunks:
         s.send(chunk)
 
 
-def getDataAsChunks(s):
-    data = s.recv(1024)
-    numChunks = data.decode('utf-8').replace("\r", "").replace("\n", "")
+def getData(s):
+    data = s.recv(1024).decode().replace('\n', '').replace('\r', '')
+    if data.startswith("S-"):
+        numPackets = int(data[2:])
+    else:
+        return data
     receivedPackets = []
-    while len(receivedPackets) < numChunks:
+    while len(receivedPackets) < numPackets:
         packet = s.recv(1024)
         receivedPackets.append(packet)
     receivedPackets = b''.join(receivedPackets)
-    return receivedPackets.decode('utf-8').replace("\r", "").replace("\n", "")
-
-
-def getUtfPackage(package):
-    return package.decode('utf-8').replace("\r", "").replace("\n", "")
+    return receivedPackets.decode()
 
 
 def concat(list):

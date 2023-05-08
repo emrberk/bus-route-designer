@@ -10,7 +10,7 @@ class Listener(threading.Thread):
 
     def run(self):
         while not self.killListener.is_set():
-            message = Utils.getDataAsChunks(self.socket)
+            message = Utils.getData(self.socket)
             # will handle based on notification type
-            print('Notification from server:', message)
+            print(message + '\n')
 
