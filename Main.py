@@ -19,7 +19,7 @@ if __name__ == '__main__':
     print(f"stop distance : {m.stopdistance(stopId1, stopId1)}")
     print(f"shortest btw 0 and 32 -> {m.shortest('0', '32')}")
     s = Schedule(m)
-    s.newroute([Route([s1, s2, s3])])
+    s.newroute(Route([s1, s2, s3]))
     line = Line(datetime.time(hour=14, minute=30), datetime.time(hour=20), datetime.time(minute=30),
                 s.getroute(1), "ilk line")
     s.addLine(line)

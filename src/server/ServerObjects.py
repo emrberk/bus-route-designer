@@ -21,7 +21,12 @@ class ServerObjects:
         s2 = maps[0].addstop('2', True, 100, 't2')
         s3 = maps[0].addstop('3', True, 100, 't3')
         schedules.append(Schedule(maps[0]))
-        schedules[0].newroute([Route([s1, s2, s3])])
+        schedules[0].newroute(Route([s1, s2, s3]))
+        lib = {
+            'add': {
+
+            }
+        }
 
     class ByThread:
         addScheduleLock = threading.Lock()

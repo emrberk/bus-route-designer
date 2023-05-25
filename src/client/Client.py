@@ -12,29 +12,23 @@ from src.client.Sender import Sender
 from src.client.ClientObjects import ClientObjects
 
 
-class Client:
-    def __init__(self):
+class Client(threading.Thread):
+    def __init__(self, targetHost, targetPort):
         self.socket = None
         self.listener = None
         self.sender = None
+        self.targetHost = targetHost
+        self.targetPort = targetPort
         self.killListener = threading.Event()
         self.killSender = threading.Event()
+        super().__init__()
 
         # Close opened ports when Ctrl-C pressed
-        signal.signal(signal.SIGINT, self.interruptHandler)
-
-        parser = argparse.ArgumentParser()
-        parser.add_argument(
-            '-H', '--host', help="Target host address", type=str, required=True
-        )
-        parser.add_argument(
-            '-p', '--port', help="Target port number", type=int, required=True
-        )
-        self.args = parser.parse_args()
-
+        # signal.signal(signal.SIGINT, self.interruptHandler)
+    def run(self):
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect((self.args.host, self.args.port))
+            s.connect((self.targetHost, self.targetPort))
             self.socket = s
             # introduce the listener socket of client to server
             sender = Sender(self.socket, self.killSender)
@@ -52,22 +46,16 @@ class Client:
             raise ConnectionError()
 
         while True:
-            userInput = input()
-            if userInput == 'new':
-                filePath = userInput[3:]
-                file = open(filePath)
-                jsonFile = json.load(file)
-                userInput = f"new {json.dumps(jsonFile)}"
+            userInput = ClientObjects.incomingMessageQueue.get()
             packets = Utils.divideIntoPackets(userInput)
+            print('packets =', packets)
             for packet in packets:
                 ClientObjects.messageQueue.put(packet)
 
+    """
     def interruptHandler(self, signum, frame):
         self.killSender.set()
         self.killListener.set()
         self.socket.close()
         exit(1)
-
-
-if __name__ == "__main__":
-    client = Client()
+    """

@@ -1,4 +1,5 @@
 import uuid
+import json
 
 
 class Route:
@@ -9,10 +10,17 @@ class Route:
         self.id = Route.counter
         self.__external_id = uuid.uuid4()
         self.stops = stopids
-        self.active = True
+
+    def get(self):
+        return {
+            'id': self.id,
+            'stops': [stop.get() for stop in self.stops]
+        }
 
     def __str__(self):
-        return f"Route {self.id}: stops={self.stops}, active={self.active}"
+        return json.dumps(self.get())
+
+    __repr__ = __str__
 
     def getStop(self, index):
         return self.stops[index]

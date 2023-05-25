@@ -30,7 +30,7 @@ class DemoApp(cmd.Cmd):
         s1 = self.defaultMap.addstop('1', True, 100, 't1')
         s2 = self.defaultMap.addstop('2', True, 100, 't2')
         s3 = self.defaultMap.addstop('3', True, 100, 't3')
-        self.schedule.newroute([Route([s1, s2, s3])])
+        self.schedule.newroute(Route([s1, s2, s3]))
         self.schedule.addLine(Line(datetime.time(hour=14, minute=30), datetime.time(hour=20), datetime.time(minute=30),
                                    self.schedule.getroute(1), "ilk line"))
 
@@ -189,7 +189,7 @@ class DemoApp(cmd.Cmd):
                 print("Please provide at least one stop id")
                 return
             route = Route(stop_ids)
-            self.schedule.newroute([route])
+            self.schedule.newroute(route)
             print(f"Route created with id: {route.id}")
 
     def do_getRoute(self, arg):

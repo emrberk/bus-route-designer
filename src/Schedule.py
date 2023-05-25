@@ -13,88 +13,72 @@ class Schedule:
     def __init__(self, map):
         Schedule.counter += 1
         self.id = Schedule.counter
-        self.lines = []
-        self.routes = []
+        self.lines = {}
+        self.routes = {}
         self.map = map
 
-    def newroute(self, routes: list):
-        for route in routes:
-            for stop in route.stops:
-                if stop not in self.map.stops:
-                    raise RouteStopIdNotFoundException(ErrorCodes.ByRoute.ROUTE_STOP_ID_NOT_FOUND,
-                                                       f"Given stop id with {stop} is not in the map\n")
+    def newroute(self, route: Route):
+        for stop in route.stops:
+            if not self.map.stops[stop]:
+                return RouteStopIdNotFoundException(ErrorCodes.ByRoute.ROUTE_STOP_ID_NOT_FOUND,
+                f"Given stop id with {stop} is not in the map\n")
 
-        for route in routes:
-            self.routes.append(route)
-            return route
+        self.routes[route.id] = route
+        return route
 
-    def getroute(self, id):
-        if not self.routes[id - 1].active:
-            raise RouteDeletedException(message="This route is deleted by an Admin",
-                                        error_code=ErrorCodes.ByRoute.ROUTE_DELETED)
-        if not self.routes[id - 1]:
-            raise RouteNotFoundException(ErrorCodes.ByRoute.ROUTE_NOT_FOUND, f"Route with id {id} cannot found")
-        return self.routes[id - 1]
+    def getroute(self, routeId):
+        route = self.routes[routeId]
+        if not route:
+            raise RouteNotFoundException(ErrorCodes.ByRoute.ROUTE_NOT_FOUND, f"Route with id {route.id} cannot found")
+        return route
 
-    def updateroute(self, id, stopIds):
-        if not self.routes[id - 1].active:
-            raise RouteDeletedException(message="This route is deleted by an Admin",
-                                        error_code=ErrorCodes.ByRoute.ROUTE_DELETED)
-        route = self.getroute(id - 1)
+    def updateroute(self, routeId, stopIds):
+        route = self.getroute(routeId)
         route.stops = stopIds
+        self.routes[routeId] = route
+        return route
 
-    def delroute(self, id):
-        if self.routes[id - 1] and self.routes[id - 1].active != False:
-            self.routes[id - 1].active = False
-        else:
-            raise RouteDeletedException(ErrorCodes.ByRoute.ROUTE_ALREADY_DELETED, "This route is already deleted")
+    def delroute(self, routeId):
+        self.routes[routeId] = None
 
     def listroutes(self):
-        activeRoutes = [obj for obj in self.routes if obj.active]
-        if not activeRoutes:
-            return "There is no Routes in the schedule now."
-        return activeRoutes
+        result = {}
+        for routeId, route in self.routes:
+            result[routeId] = route.get()
+        return result
 
     def addLine(self, line):
-        self.lines.append(line)
+        self.lines[line.id] = line
 
     def getLine(self, line_id):
-        if not self.lines[line_id - 1].active:
-            raise LineDeletedException(message="This line is deleted by an Admin",
-                                       error_code=ErrorCodes.ByLine.LINE_DELETED)
-        if not self.lines[line_id - 1]:
+        if not self.lines[line_id]:
             raise LineNotFoundException(ErrorCodes.ByLine.LINE_NOT_FOUND, f"Line with id {line_id} cannot found")
-        return self.lines[line_id - 1]
+        return self.lines[line_id]
 
     def updateLine(self, line_id, start: datetime.time, end: datetime.time, rep: datetime.time, route: Route,
                    description=""):
-        if not self.lines[line_id - 1].active:
-            raise LineDeletedException(message="This line is deleted by an Admin",
-                                       error_code=ErrorCodes.ByLine.LINE_DELETED)
         line = self.getLine(line_id)
         line.start_time = start
         line.end_time = end
         line.rep = rep
         line.route = route
         line.description = description
+        return line
 
     def delLine(self, line_id):
-        if self.lines[line_id - 1] and self.lines[line_id - 1].active != False:
-            self.lines[line_id - 1].active = False
-        else:
-            raise LineDeletedException(ErrorCodes.ByLine.LINE_DELETED, "This line is already deleted")
+        self.lines[line_id] = None
 
     def listlines(self):
-        activeLines = [obj for obj in self.lines if obj.active]
-        if not activeLines:
-            return "There is no Line in the schedule now."
-        return activeLines
+        result = {}
+        for lineId, line in self.routes:
+            result[lineId] = line.get()
+        return result
 
-    def lineinfo(self, id):
-        return self.lines[id - 1]
+    def lineinfo(self, lineId):
+        return self.lines[lineId].get()
 
     def calculateEstimatedTimes(self, lineId, expectedStopId):
-        line = self.lines[lineId - 1]
+        line = self.lines[lineId]
         expectedIndex = line.route.stops.index(expectedStopId)
         start = line.start_time
         end = line.end_time
@@ -117,6 +101,7 @@ class Schedule:
             start = Utils.add_times(start, line.rep)
         return times
 
+    # may change according to the data flow
     def printLineReport(self, lines, stopId):
         for line in lines:
             print(f"Line {line} is passing from this stop")

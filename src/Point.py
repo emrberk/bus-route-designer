@@ -1,5 +1,5 @@
 import numpy as np
-
+import json
 
 class Point:
     def __init__(self, *args):
@@ -34,8 +34,14 @@ class Point:
     def __eq__(self, other):
         return round(self.x, 2) == round(other.x, 2) and round(self.y, 2) == round(other.y, 2)
 
+    def get(self):
+        return {
+            'x': self.x,
+            'y': self.y
+        }
+
     def __str__(self):
-        return "(x: {}, y: {})".format(self.x, self.y)
+        return json.dumps(self.get())
 
     __repr__ = __str__
 

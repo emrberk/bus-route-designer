@@ -1,6 +1,6 @@
 import uuid
 from src.Point import Point
-
+import json
 
 class BusStop:
     def __init__(self, id: uuid.UUID, point: Point, source: str, destination: str, description: str, wayId: str):
@@ -47,13 +47,18 @@ class BusStop:
     def setDescription(self, description: str):
         self.description = description
 
+    def get(self):
+        return {
+            'id': self.id,
+            'point': self.point.get(),
+            'source': self.source,
+            'destination': self.destination,
+            'description': self.description,
+            'wayId': self.wayId
+        }
+
     def __str__(self):
-        return (f"ID: {self.id}\n"
-                f"Point: {self.point}\n"
-                f"Source: {self.source}\n"
-                f"Destination: {self.destination}\n"
-                f"Description: {self.description}"
-                )
+        return json.dumps(self.get())
 
     __repr__ = __str__
 

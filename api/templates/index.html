@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Home</title>
+</head>
+<body>
+    <form action="http://localhost:8000/api/" method="post">
+        <label for="command-type">
+            Command type:
+        </label>
+        <select onchange="handleTypeChange()" id="command-type" name="type">
+            <option>new</option>
+            <option>list</option>
+            <option>open</option>
+            <option>close</option>
+        </select>
+        <label for="instances">Instance:</label>
+        <select id="instances" name="instance">
+            <option>map</option>
+        </select>
+        <label for="payload">Payload:</label>
+        <textarea id="payload" name="payload"></textarea>
+        <input type="submit" value="Request">
+    </form>
+    {{ result }}
+</body>
+<script>
+    const INSTANCES_TYPE_MAP = {
+      'open': ['map'],
+      'list': ['route', 'line', 'map', 'stop', 'schedule'],
+      'close': ['map'],
+      'new': ['map']
+    };
+    const renderInstances = commandType => {
+        const instanceDropdown = document.getElementById('instances');
+        instanceDropdown.innerHTML = '';
+        const elements = INSTANCES_TYPE_MAP[commandType];
+        elements.forEach(element => {
+          const newOption = document.createElement('option');
+          newOption.innerHTML = element;
+          instanceDropdown.appendChild(newOption);
+        })
+    };
+    const handleTypeChange = () => {
+      const selectedValue = document.getElementById('command-type').value;
+      renderInstances(selectedValue);
+    };
+</script>
+</html>

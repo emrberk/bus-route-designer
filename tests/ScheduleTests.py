@@ -19,7 +19,7 @@ class ScheduleTests(unittest.TestCase):
         self.stop1 = s1
         self.stop2 = s2
         self.stop3 = s3
-        self.schedule.newroute([Route([s1, s2, s3])])
+        self.schedule.newroute(Route([s1, s2, s3]))
         self.schedule.addLine(Line(datetime.time(hour=14, minute=30), datetime.time(hour=20), datetime.time(minute=30),
                                    self.schedule.getroute(1), "ilk line"))
 
@@ -30,7 +30,7 @@ class ScheduleTests(unittest.TestCase):
         self.assertNotEqual(self.schedule.map, None, "(init) : Map is not null test")
 
     def test_NewRoute(self):
-        createdRoute = self.schedule.newroute([Route([self.stop1, self.stop3])])
+        createdRoute = self.schedule.newroute(Route([self.stop1, self.stop3]))
         self.assertEqual(createdRoute.id, 2, "(newRoute) : route counter test")
         self.assertEqual(len(createdRoute.stops), 2, "(newRoute) : route stops test")
         self.assertEqual(createdRoute.stops, [self.stop1, self.stop3], "(newRoute) : route stops test")

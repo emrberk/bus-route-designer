@@ -109,12 +109,15 @@ def divideIntoPackets(message):
         else:
             chunks.append(encodedMessage)
     if len(chunks) > 1:
-        chunks = [f"S-{len(chunks)}".encode()] + chunks
+        length = f"S-{len(chunks)}"
+        extraCharacters = 1024 - len(length)
+        length += extraCharacters * chr(0)
+        chunks = [length.encode()] + chunks
     return chunks
 
 
 def sendData(s, data):
-    chunks = divideIntoPackets(data)
+    chunks = divideIntoPackets(json.dumps(data))
     for chunk in chunks:
         s.send(chunk)
 
@@ -122,15 +125,18 @@ def sendData(s, data):
 def getData(s):
     data = s.recv(1024).decode().replace('\n', '').replace('\r', '')
     if data.startswith("S-"):
-        numPackets = int(data[2:])
+        end = data.index(chr(0))
+        print('end =', end)
+        numPackets = int(data[2:end])
+        print(numPackets)
     else:
-        return data
+        return json.loads(data.replace('\r\n', ''))
     receivedPackets = []
     while len(receivedPackets) < numPackets:
         packet = s.recv(1024)
         receivedPackets.append(packet)
     receivedPackets = b''.join(receivedPackets)
-    return receivedPackets.decode()
+    return json.loads(receivedPackets.decode().replace('\r\n', ''))
 
 
 def concat(list):

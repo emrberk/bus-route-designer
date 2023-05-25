@@ -1,7 +1,7 @@
 import queue
 import threading
 from uuid import UUID
-
+import hashlib
 from src.Line import Line
 from src.Map import Map
 from src.Route import Route
@@ -35,43 +35,49 @@ class Agent(threading.Thread):
         self.attachedSchedules = []
         self.messageQueue = queue.Queue()
         self.daemon = True
+        self.session = None
         self._stop_event = threading.Event()
         self.notificationHandler = NotificationHandler(conn, addr)
 
     def stop(self):
         self._stop_event.set()
 
-    def login(self):
-        while True:
-            try:
-                sendData(self.conn, "Please login to system :\n")
-                sendData(self.conn, "Username : ")
-                usrname = getData(self.conn)
-                names = [usr.username for usr in ServerObjects.ByUser.users]
-                if usrname not in names:
-                    sendData(self.conn, f"No user with username {usrname}\n")
-                    continue
-                index = names.index(usrname)
-                sendData(self.conn, "Password : ")
-                passwd = getData(self.conn)
-                user = ServerObjects.ByUser.users[index]
-                token = user.login(passwd)
-                if token:
-                    return True
-            except Exception as e:
-                sendData(self.conn, str(e))
-                self.conn.close()
+    def check_session(self, data):
+        if data['type'] == 'login':
+            username = data['username']
+            password = data['password']
+            for user in ServerObjects.ByUser.users:
+                if user.getUsername() == username and user.auth(password):
+                    cookie = hashlib.sha256((username + password).encode('utf-8')).hexdigest()
+                    self.session = cookie
+                    sendData(self.conn, {
+                        'result': 'success',
+                        'username': username,
+                        'cookie': cookie
+                    })
+                    return False
+            sendData(self.conn, {'result': 'noSession'})
+            return False
+        if self.session == data['cookie']:
+            return True
+        sendData(self.conn, {'result': 'noSession'})
+        return False
 
     def run(self):
         self.notificationHandler.start()
         print(f'Client {self.addr} is connected.')
-        self.login()
         while not self._stop_event.is_set():
             try:
-                sendData(self.conn, "What do you want me to do? : \n")
-                message = getData(self.conn)
-                response = message.split()
-                print('response =', response)
+                data = getData(self.conn)
+                print('data =', data, type(data))
+                #sessionExits = self.check_session(data)
+                #print('session exists?', sessionExits)
+                #if not sessionExits:
+                #    continue
+                print('data in agent', data)
+                # requestType = "ADD", "DELETE", "UPDATE", "NEW", "LOGIN"
+                sendData(self.conn, data)
+                """
                 if response[0] == ae.ADD_MAP:
                     ServerObjects.ByThread.addMapLock.acquire()
                     mapData = ' '.join(response[1:])
@@ -146,7 +152,7 @@ class Agent(threading.Thread):
                     stoplist = []
                     for i in range(int(response[2])):
                         stoplist.append(UUID(response[3 + i]))
-                    schedule_edited.newroute([Route(stoplist)])
+                    schedule_edited.newroute(Route(stoplist))
                     putNotification("New route is added.")
                     ServerObjects.ByThread.addRouteLock.release()
 
@@ -213,6 +219,7 @@ class Agent(threading.Thread):
                     schedule_edited.delLine(int(response[2]))
                     putNotification(f"Line with id {int(response[2])} is deleted.")
                     ServerObjects.ByThread.addRouteLock.release()
-
+            """
             except Exception as e:
                 sendData(self.conn, str(e))
+

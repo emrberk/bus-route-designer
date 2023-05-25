@@ -1,6 +1,6 @@
 import hashlib
 import uuid
-
+import json
 from src.Exception.ErrorCodes import ErrorCodes
 from src.Exception.UserException import PasswordException
 from src.util.Validators import *
@@ -15,12 +15,6 @@ class User:
         self.fullName = fullName
         self.password = hashlib.md5(password.encode())
         self.sessionToken = None
-
-    def __str__(self):
-        return (f"Username: {self.username}\n"
-                f"Email: {self.email}\n"
-                f"Full Name: {self.fullName}."
-                )
 
     def getUsername(self):
         return self.username
@@ -120,3 +114,15 @@ class User:
             else:
                 print(f"There is no user named {usrname}. If you wish to create new account, you need to type signUp.")
                 return None
+
+    def get(self):
+        return {
+            'username': self.username,
+            'email': self.email,
+            'fullName': self.fullName
+        }
+
+    def __str__(self):
+        return json.dumps(self.get())
+
+    __repr__ = __str__

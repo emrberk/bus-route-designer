@@ -241,9 +241,19 @@ class Map:
         return shortestId
 
     def getStopsInfo(self):
-        stopList = []
-        if self.stops == {}:
-            return "There is no stop in this area."
-        for stop in self.stops:
-            stopList.append(self.getStop(stop))
-        return stopList
+        return self.stops
+
+    def get(self):
+        return {
+            'id': self.id,
+            'nodes': self.nodes,
+            'ways': self.ways,
+            'stops': self.stops,
+            'edges': self.edges,
+            'edgeCosts': self.edgeCosts
+        }
+
+    def __str__(self):
+        return json.dumps(self.get())
+
+    __repr__ = __str__
