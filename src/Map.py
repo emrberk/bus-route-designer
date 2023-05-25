@@ -244,11 +244,20 @@ class Map:
         return self.stops
 
     def get(self):
+        newStops = {}
+        for stopId, stop in self.stops.items():
+            newStops[stopId] = stop.get()
+        newNodes = {}
+        for nodeId, node in self.nodes.items():
+            newNodes[nodeId] = node.get()
+        newWays = {}
+        for wayId, way in self.ways.items():
+            newWays[wayId] = [pt.get() for pt in way]
         return {
             'id': self.id,
-            'nodes': self.nodes,
-            'ways': self.ways,
-            'stops': self.stops,
+            'nodes': newNodes,
+            'ways': newWays,
+            'stops': newStops,
             'edges': self.edges,
             'edgeCosts': self.edgeCosts
         }

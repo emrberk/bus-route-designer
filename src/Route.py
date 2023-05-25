@@ -14,7 +14,7 @@ class Route:
     def get(self):
         return {
             'id': self.id,
-            'stops': [stop.get() for stop in self.stops]
+            'stops': [str(stop) for stop in self.stops]
         }
 
     def __str__(self):

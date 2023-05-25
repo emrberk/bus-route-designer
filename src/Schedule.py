@@ -43,7 +43,7 @@ class Schedule:
 
     def listroutes(self):
         result = {}
-        for routeId, route in self.routes:
+        for routeId, route in self.routes.items():
             result[routeId] = route.get()
         return result
 

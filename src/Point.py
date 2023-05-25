@@ -40,6 +40,11 @@ class Point:
             'y': self.y
         }
 
+    def __dict__(self):
+        return {
+            'x': self.x,
+            'y': self.y
+        }
     def __str__(self):
         return json.dumps(self.get())
 

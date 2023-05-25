@@ -17,6 +17,7 @@
             <option>list</option>
             <option>open</option>
             <option>close</option>
+            <option>delete</option>
         </select>
         <label for="instances">Instance:</label>
         <select id="instances" name="instance">
@@ -33,7 +34,8 @@
       'open': ['map'],
       'list': ['route', 'line', 'map', 'stop', 'schedule'],
       'close': ['map'],
-      'new': ['map']
+      'new': ['route', 'line', 'map', 'stop', 'schedule'],
+      'delete': ['route', 'line', 'map', 'stop', 'schedule']
     };
     const renderInstances = commandType => {
         const instanceDropdown = document.getElementById('instances');

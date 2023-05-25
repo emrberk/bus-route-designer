@@ -49,7 +49,7 @@ class BusStop:
 
     def get(self):
         return {
-            'id': self.id,
+            'id': str(self.id),
             'point': self.point.get(),
             'source': self.source,
             'destination': self.destination,
