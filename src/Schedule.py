@@ -17,6 +17,14 @@ class Schedule:
         self.routes = {}
         self.map = map
 
+    def get(self):
+        return {
+            'id': self.id,
+            'lines': [self.lines[lineId].get() for lineId in self.lines],
+            'routes': [self.routes[routeId].get() for routeId in self.routes],
+            'mapId': self.map.id
+        }
+
     def newroute(self, route: Route):
         for stop in route.stops:
             if not self.map.stops[stop]:
@@ -69,10 +77,7 @@ class Schedule:
         self.lines[line_id] = None
 
     def listlines(self):
-        result = {}
-        for lineId, line in self.routes:
-            result[lineId] = line.get()
-        return result
+        return [self.lineinfo(lineId) for lineId in self.lines]
 
     def lineinfo(self, lineId):
         return self.lines[lineId].get()

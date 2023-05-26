@@ -46,11 +46,13 @@ class Client(threading.Thread):
             raise ConnectionError()
 
         while True:
-            userInput = ClientObjects.incomingMessageQueue.get()
-            packets = Utils.divideIntoPackets(userInput)
-            print('packets =', packets)
-            for packet in packets:
-                ClientObjects.messageQueue.put(packet)
+            try:
+                userInput = ClientObjects.incomingMessageQueue.get()
+                packets = Utils.divideIntoPackets(userInput)
+                for packet in packets:
+                    ClientObjects.messageQueue.put(packet)
+            except:
+                pass
 
     """
     def interruptHandler(self, signum, frame):

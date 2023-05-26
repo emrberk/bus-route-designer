@@ -20,15 +20,66 @@
             <option>delete</option>
         </select>
         <label for="instances">Instance:</label>
-        <select id="instances" name="instance">
+        <select id="instances" name="instance" onchange="handleInstanceChange()">
             <option>map</option>
+            <option>line</option>
+            <option>route</option>
+            <option>schedule</option>
+            <option>stop</option>
         </select>
+        <div id="for-add-route">
+            <label for="add-route">Enter stop ids separated by spaces</label>
+            <textarea id="add-route" name="stopIds"></textarea>
+        </div>
+        <div id="for-add-stop">
+            <label for="edgeId">Enter edgeId</label>
+            <input type="number" id="edgeId" name="edgeId">
+            <label for="direction">Direction</label>
+            <select id="direction" name="direction">
+                <option>1</option>
+                <option>0</option>
+            </select>
+            <label for="percentage">Percentage</label>
+            <input type="number" id="percentage" name="percentage" min="0" max="100">
+        </div>
+        <div id="for-add-line">
+            <label for="startTime">Enter a start time</label>
+            <input type="time" id="startTime" name="startTime">
+            <label for="endTime">Enter an end time</label>
+            <input type="time" id="endTime" name="endTime">
+            <label for="interval">Enter an interval in minutes</label>
+            <input type="number" id="interval" name="interval">
+            <label for="routeId">Enter route id</label>
+            <input type="text" name="routeId" id="routeId">
+            <label for="scheduleId">Enter schedule id</label>
+            <input type="text" name="scheduleId" id="scheduleId">
+        </div>
         <label for="payload">Payload:</label>
         <textarea id="payload" name="payload"></textarea>
         <input type="submit" value="Request">
     </form>
+    <pre id="result">
     {{ result }}
+    </pre>
 </body>
+<style>
+    form, div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    form > * {
+        width: 50%;
+    }
+    #for-add-route {
+        display: flex;
+        flex-direction: column;
+    }
+    select, input[type="submit"] {
+        height: 30px;
+    }
+</style>
 <script>
     const INSTANCES_TYPE_MAP = {
       'open': ['map'],
@@ -37,6 +88,46 @@
       'new': ['route', 'line', 'map', 'stop', 'schedule'],
       'delete': ['route', 'line', 'map', 'stop', 'schedule']
     };
+    const inputForAddRoute = document.getElementById('for-add-route');
+    const inputForAddStop = document.getElementById('for-add-stop');
+    const inputForAddLine = document.getElementById('for-add-line');
+    inputForAddRoute.style.display = 'none';
+    inputForAddStop.style.display = 'none';
+    inputForAddLine.style.display = 'none';
+
+    const getPayloadPlaceholder = (type, instance) => {
+      switch (true) {
+        case type === 'close' && instance === 'map':
+        case type === 'open' && instance === 'map':
+          return "Enter map id";
+        case type === 'new' && instance === 'map':
+          return "Enter a json string or a path";
+        case type === 'list' && instance === 'line':
+        case type === 'list' && instance === 'route':
+        case type === 'new' && instance === 'route':
+          return "Enter a schedule id";
+        case type === 'new' && instance === 'line':
+        case type === 'new' && instance === 'stop':
+          return "Enter a description";
+        default:
+          return "";
+      }
+    }
+    const handleExtraFields = () => {
+      const type = document.getElementById('command-type').value;
+      const instance = document.getElementById('instances').value;
+      const payload = document.getElementById('payload');
+      payload.placeholder = getPayloadPlaceholder(type, instance);
+      const isNewRoute = type === 'new' && instance === 'route';
+      const isNewStop = type === 'new' && instance === 'stop';
+      const isNewLine = type === 'new' && instance === 'line';
+      inputForAddRoute.style.display = isNewRoute ? 'block' : 'none';
+      inputForAddStop.style.display = isNewStop ? 'block' : 'none';
+      inputForAddLine.style.display = isNewLine ? 'block' : 'none';
+    };
+    const handleInstanceChange = () => {
+      handleExtraFields();
+    }
     const renderInstances = commandType => {
         const instanceDropdown = document.getElementById('instances');
         instanceDropdown.innerHTML = '';
@@ -45,11 +136,13 @@
           const newOption = document.createElement('option');
           newOption.innerHTML = element;
           instanceDropdown.appendChild(newOption);
-        })
+        });
     };
     const handleTypeChange = () => {
       const selectedValue = document.getElementById('command-type').value;
       renderInstances(selectedValue);
+      handleExtraFields();
     };
+    handleExtraFields();
 </script>
 </html>

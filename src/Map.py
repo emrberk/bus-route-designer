@@ -241,7 +241,7 @@ class Map:
         return shortestId
 
     def getStopsInfo(self):
-        return self.stops
+        return [self.stops[stopId].get() for stopId in self.stops]
 
     def get(self):
         newStops = {}

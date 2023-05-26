@@ -21,9 +21,9 @@ class Line:
         return {
             'id': self.id,
             'description': self.description,
-            'start_time': self.start_time,
-            'end_time': self.end_time,
-            'interval': self.interval,
+            'start_time': self.start_time.strftime("%H:%M"),
+            'end_time': self.end_time.strftime("%H:%M"),
+            'interval': self.interval.strftime("%M"),
             'route': self.route.get()
         }
 
