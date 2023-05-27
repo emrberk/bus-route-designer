@@ -3,6 +3,7 @@ import threading
 from src.util import Utils
 from src.client.ClientObjects import ClientObjects
 
+
 class Listener(threading.Thread):
     def __init__(self, s, killListener):
         self.socket = s
@@ -13,5 +14,8 @@ class Listener(threading.Thread):
         while not self.killListener.is_set():
             message = Utils.getData(self.socket)
             # will handle based on notification type
-            ClientObjects.responseQueue.put(message)
+            if 'type' in message and message['type'] == 'simulation':
+                ClientObjects.simulationData.append(message['data'])
+            else:
+                ClientObjects.responseQueue.put(message)
 

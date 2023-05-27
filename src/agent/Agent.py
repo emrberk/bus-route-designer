@@ -6,6 +6,7 @@ from src.Line import Line
 from src.Map import Map
 from src.Route import Route
 from src.Schedule import Schedule
+from src.simulator.Simulator import Simulator
 from src.agent.AgentEnum import AgentEnum as ae
 from src.agent.NotificationHandler import NotificationHandler
 from src.agent.HelpCommand import HELP_LIST
@@ -37,6 +38,8 @@ class Agent(threading.Thread):
         self.messageQueue = queue.Queue()
         self.daemon = True
         self.session = None
+        self.simulator = None
+        self.stop_simulation = threading.Event()
         self._stop_event = threading.Event()
         self.notificationHandler = NotificationHandler(conn, addr)
         self.lib = {
@@ -128,13 +131,13 @@ class Agent(threading.Thread):
         schedIds = [str(schedule.id) for schedule in self.attachedSchedules]
         index = schedIds.index(data['scheduleId'])
         schedule_edited = self.attachedSchedules[index]
-        addedLine = Line(datetime.time(hour=int(startTime[0]), minute=int(startTime[1])),
-                         datetime.time(hour=int(endTime[0]), minute=int(endTime[1])),
-                         datetime.time(minute=int(data['interval'])),
+        addedLine = Line(datetime.time(hour=int(startTime[0]), minute=int(startTime[1]), second=0),
+                         datetime.time(hour=int(endTime[0]), minute=int(endTime[1]), second=0),
+                         datetime.timedelta(minutes=int(data['interval'])),
                          schedule_edited.getroute(int(data['routeId'])), data['payload'])
         schedule_edited.addLine(addedLine)
+        ServerObjects.ByServer.lines.append(addedLine)
         #putNotification("New line is added.")
-        print(addedLine.get())
         return addedLine.get()
 
     def add_schedule(self, data):  # takes no parameters?
@@ -223,11 +226,27 @@ class Agent(threading.Thread):
                 #print('session exists?', sessionExits)
                 #if not sessionExits:
                 #    continue
-                print('data in agent', data)
-                # requestType = "ADD", "DELETE", "UPDATE", "NEW", "LOGIN"
-                result = self.lib[data['type']][data['instance']]['function'](data)
-                print('result =', result)
-                sendData(self.conn, {'result': result})
+                if data['type'] == 'simulation':
+                    if self.simulator:
+                        continue
+                    startTime = data['startTime'].split(':')
+                    self.simulator = Simulator(
+                        self.selectedMap,
+                        ServerObjects.ByServer.lines,
+                        ServerObjects.ByServer.notifications,
+                        int(data['speed']),
+                        datetime.time(hour=int(startTime[0]), minute=int(startTime[1])),
+                        putNotification,
+                        self.stop_simulation
+                    )
+                    self.simulator.start()
+                else:
+                    if self.simulator:
+                        self.stop_simulation.set()
+                        self.simulator.join()
+                    result = self.lib[data['type']][data['instance']]['function'](data)
+                    print('result =', result)
+                    sendData(self.conn, {'result': result})
 
                 """
                 if response[0] == ae.ADD_MAP:

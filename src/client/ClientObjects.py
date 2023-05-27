@@ -5,4 +5,5 @@ class ClientObjects:
     messageQueue = Queue()
     incomingMessageQueue = Queue()
     responseQueue = Queue()
+    simulationData = []
 

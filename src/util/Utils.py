@@ -8,7 +8,8 @@ from src.Point import Point
 
 
 def euclideanDistance(p1: Point, p2: Point) -> float:
-    return math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2)
+    # to find real distance in km
+    return math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2) * 16.8 / 1000
 
 
 def dot(p0: Point, p1: Point) -> float:

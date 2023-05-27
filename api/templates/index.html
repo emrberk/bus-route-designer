@@ -8,7 +8,12 @@
     <title>Home</title>
 </head>
 <body>
-    <form action="http://localhost:8000/api/" method="post">
+    <label for="formChange">What do you want to do?</label>
+    <select id="formChange" onchange="handleFormChange()">
+        <option>Add data</option>
+        <option>Create simulation</option>
+    </select>
+    <form id="add-data" action="http://localhost:8000/api/" method="post">
         <label for="command-type">
             Command type:
         </label>
@@ -58,6 +63,12 @@
         <textarea id="payload" name="payload"></textarea>
         <input type="submit" value="Request">
     </form>
+    <form id="simulator" action="http://localhost:8000/api/simulator" method="post">
+        <label for="startTime-simulator">Enter a start time</label>
+        <input type="time" id="startTime-simulator" name="startTime">
+        <span>1 second in real time corresponds to</span><input name="speed" type="number"><span>seconds in the simulation.</span>
+        <input type="submit" value="Start Simulation">
+    </form>
     <pre id="result">
     {{ result }}
     </pre>
@@ -69,14 +80,13 @@
         align-items: center;
         gap: 10px;
     }
+    div {
+        align-items: flex-start;
+    }
     form > * {
         width: 50%;
     }
-    #for-add-route {
-        display: flex;
-        flex-direction: column;
-    }
-    select, input[type="submit"] {
+    select, input {
         height: 30px;
     }
 </style>
@@ -88,12 +98,26 @@
       'new': ['route', 'line', 'map', 'stop', 'schedule'],
       'delete': ['route', 'line', 'map', 'stop', 'schedule']
     };
+    const addDataForm = document.getElementById('add-data');
+    const simulatorForm = document.getElementById('simulator')
     const inputForAddRoute = document.getElementById('for-add-route');
     const inputForAddStop = document.getElementById('for-add-stop');
     const inputForAddLine = document.getElementById('for-add-line');
     inputForAddRoute.style.display = 'none';
     inputForAddStop.style.display = 'none';
     inputForAddLine.style.display = 'none';
+    simulatorForm.style.display = 'none';
+
+    const handleFormChange = e => {
+      const value = document.querySelector('select[id="formChange"]').value;
+      if (value === 'Add data') {
+        addDataForm.style.display = 'flex';
+        simulatorForm.style.display = 'none';
+      } else {
+        addDataForm.style.display = 'none';
+        simulatorForm.style.display = 'flex';
+      }
+    };
 
     const getPayloadPlaceholder = (type, instance) => {
       switch (true) {
@@ -116,14 +140,23 @@
     const handleExtraFields = () => {
       const type = document.getElementById('command-type').value;
       const instance = document.getElementById('instances').value;
+      const payloadLabel = document.querySelector('label[for="payload"]');
       const payload = document.getElementById('payload');
-      payload.placeholder = getPayloadPlaceholder(type, instance);
+      const labelText = getPayloadPlaceholder(type, instance);
+      if (!labelText) {
+        payload.style.display = 'none';
+        payloadLabel.style.display = 'none';
+      } else {
+        payloadLabel.style.display = 'block';
+        payload.style.display = 'block';
+        payloadLabel.innerHTML = labelText;
+      }
       const isNewRoute = type === 'new' && instance === 'route';
       const isNewStop = type === 'new' && instance === 'stop';
       const isNewLine = type === 'new' && instance === 'line';
-      inputForAddRoute.style.display = isNewRoute ? 'block' : 'none';
-      inputForAddStop.style.display = isNewStop ? 'block' : 'none';
-      inputForAddLine.style.display = isNewLine ? 'block' : 'none';
+      inputForAddRoute.style.display = isNewRoute ? 'flex' : 'none';
+      inputForAddStop.style.display = isNewStop ? 'flex' : 'none';
+      inputForAddLine.style.display = isNewLine ? 'flex' : 'none';
     };
     const handleInstanceChange = () => {
       handleExtraFields();
@@ -143,6 +176,35 @@
       renderInstances(selectedValue);
       handleExtraFields();
     };
+    function output(inp) {
+      document.getElementById('result').innerHTML = inp;
+    }
+
+    function syntaxHighlight(json) {
+      json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        var cls = 'number';
+        if (/^"/.test(match)) {
+          if (/:$/.test(match)) {
+            cls = 'key';
+          } else {
+            cls = 'string';
+          }
+        } else if (/true|false/.test(match)) {
+          cls = 'boolean';
+        } else if (/null/.test(match)) {
+          cls = 'null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+      });
+    }
+
+    const obj = JSON.parse(document.getElementById('result').innerHTML)
+    if (obj) {
+      const str = JSON.stringify(obj, null, 4);
+      output(syntaxHighlight(str));
+    }
     handleExtraFields();
+
 </script>
 </html>

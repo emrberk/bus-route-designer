@@ -16,6 +16,7 @@ class ServerObjects:
         threads = []
         users = []
         schedules = []
+        lines = []
         notifications = {}
         maps = [Map(PATH)]
         s1 = maps[0].addstop('1', True, 100, 't1')

@@ -17,6 +17,15 @@ class Route:
             'stops': [str(stop) for stop in self.stops]
         }
 
+    def getRouteCost(self, map):
+        routeCost = {'time': 0, 'distance': 0}
+        for i in range(0, len(self.stops) - 1):
+            distance, time = map.stopdistance(self.stops[i], self.stops[i + 1])
+            routeCost['time'] += time
+            routeCost['distance'] += distance
+        return routeCost
+
+
     def __str__(self):
         return json.dumps(self.get())
 

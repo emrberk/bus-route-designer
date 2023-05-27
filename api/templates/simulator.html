@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Simulator</title>
+</head>
+<body>
+    <h1>Total of {{count}} results</h1>
+    <button type="button" onclick="handleStopTimeout()">STOP SIMULATION</button>
+    <pre id="result">
+        {{ result }}
+    </pre>
+</body>
+<script>
+  const reloadTimeout = setTimeout(() => {
+    window.location.reload();
+  }, 1000)
+
+  const handleStopTimeout = () => {
+    clearTimeout(reloadTimeout);
+  };
+
+  function output(inp) {
+    document.getElementById('result').innerHTML = inp;
+  }
+
+  function syntaxHighlight(json) {
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+      var cls = 'number';
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) {
+          cls = 'key';
+        } else {
+          cls = 'string';
+        }
+      } else if (/true|false/.test(match)) {
+        cls = 'boolean';
+      } else if (/null/.test(match)) {
+        cls = 'null';
+      }
+      return '<span class="' + cls + '">' + match + '</span>';
+    });
+  }
+
+  const obj = JSON.parse(document.getElementById('result').innerHTML)
+  if (obj) {
+    const str = JSON.stringify(obj, null, 4);
+    output(syntaxHighlight(str));
+  }
+</script>
+</html>
