@@ -1,9 +1,9 @@
+import json
+
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
+
 from src.client.Client import Client
 from src.client.ClientObjects import ClientObjects
-import json
 
 try:
     client = Client('0.0.0.0', 2001)
@@ -29,7 +29,7 @@ def index(request):
         print('put data ', json.dumps(data))
         responseMessage = responseQueue.get()
         print('get data ', responseMessage)
-        #if responseMessage['result'] == 'noSession':
+        # if responseMessage['result'] == 'noSession':
         #    return redirect('/api/login')
         return render(request, 'index.html', {'result': json.dumps(responseMessage).replace("'", '"')})
 
@@ -44,9 +44,10 @@ def simulator(request):
         messageQueue.put(json.dumps(data))
         ClientObjects.simulationData = []
         return redirect('/api/simulator')
-        #return render(request, 'simulator.html', {'result': 'Simulation started'})
+        # return render(request, 'simulator.html', {'result': 'Simulation started'})
     else:
-        return render(request, 'simulator.html', {'count': str(len(ClientObjects.simulationData)), 'result': json.dumps(ClientObjects.simulationData).replace("'", '"')})
+        return render(request, 'simulator.html', {'count': str(len(ClientObjects.simulationData)),
+                                                  'result': json.dumps(ClientObjects.simulationData).replace("'", '"')})
 
 
 def login(request):
@@ -66,4 +67,3 @@ def login(request):
         response.set_cookie(key='cookie', value=responseMessage['cookie'])
         return response
     return render(request, 'login.html')
-

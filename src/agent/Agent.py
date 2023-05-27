@@ -1,18 +1,18 @@
+import hashlib
 import queue
 import threading
+import traceback
 from uuid import UUID
-import hashlib
+
 from src.Line import Line
 from src.Map import Map
 from src.Route import Route
 from src.Schedule import Schedule
-from src.simulator.Simulator import Simulator
-from src.agent.AgentEnum import AgentEnum as ae
-from src.agent.NotificationHandler import NotificationHandler
 from src.agent.HelpCommand import HELP_LIST
+from src.agent.NotificationHandler import NotificationHandler
 from src.server.ServerObjects import ServerObjects
+from src.simulator.Simulator import Simulator
 from src.util.Utils import *
-import traceback
 
 
 def putNotification(message):
@@ -86,6 +86,23 @@ class Agent(threading.Thread):
                 'map': {
                     'function': self.close_map
                 }
+            },
+            'delete': {
+                'map': {
+                    'function': self.delete_map
+                },
+                'route': {
+                    'function': self.delete_route
+                },
+                'schedule': {
+                    'function': self.delete_schedule
+                },
+                'line': {
+                    'function': self.delete_line
+                },
+                'stop': {
+                    'function': self.delete_stop
+                }
             }
         }
 
@@ -117,8 +134,40 @@ class Agent(threading.Thread):
             stoplist.append(UUID(stopId))
         newRoute = Route(stoplist)
         schedule_edited.newroute(newRoute)
-        #putNotification("New route is added.")
+        # putNotification("New route is added.")
         return newRoute.get()
+
+    def delete_route(self, data):
+        print("mydata: ", data)
+        routeId = data['deleteRoute']
+        scheduleId = data['payload']
+        schedIds = [str(schedule.id) for schedule in self.attachedSchedules]
+        index = schedIds.index(scheduleId)
+        schedule_edited = self.attachedSchedules[index]
+        schedule_edited.delroute(int(routeId))
+        return f"route with id {routeId} is deleted"
+
+    @staticmethod
+    def delete_schedule(data):
+        payload = data['payload']
+        scheduleIds = [str(schedule.id) for schedule in ServerObjects.ByServer.schedules]
+        index = scheduleIds.index(payload)
+        del ServerObjects.ByServer.schedules[index]
+        return f"Schedule with id {payload} is deleted"
+
+    def delete_line(self, data):
+        scheduleId = data['payload']
+        lineId = data['lineId']
+        schedIds = [str(schedule.id) for schedule in self.attachedSchedules]
+        index = schedIds.index(scheduleId)
+        schedule_edited = self.attachedSchedules[index]
+        schedule_edited.delLine(int(lineId))
+        return f"Line with id {int(lineId)} is deleted."
+
+    def delete_stop(self, data):
+        payload = data['payload']
+        self.selectedMap.delStop(UUID(payload))
+        return f"stop with id {payload} is deleted"
 
     def add_stop(self, data):
         direction = True if data['direction'] == '1' else False
@@ -137,14 +186,14 @@ class Agent(threading.Thread):
                          schedule_edited.getroute(int(data['routeId'])), data['payload'])
         schedule_edited.addLine(addedLine)
         ServerObjects.ByServer.lines.append(addedLine)
-        #putNotification("New line is added.")
+        # putNotification("New line is added.")
         return addedLine.get()
 
     def add_schedule(self, data):  # takes no parameters?
         created_map = ServerObjects.ByServer.maps[0]
         schedule = Schedule(created_map)
         ServerObjects.ByServer.schedules.append(schedule)
-        #putNotification(
+        # putNotification(
         #    f"Thread {threading.get_ident()} added a new schedule on Map")
         return schedule.get()
 
@@ -194,6 +243,17 @@ class Agent(threading.Thread):
         self.selectedMapId = 0
         return 'Map is closed'
 
+    def delete_map(self, data):
+        payload = data['payload']
+        if self.selectedMapId == int(payload):
+            self.selectedMap = None
+            self.selectedMapId = 0
+        mapIds = [str(maps.id) for maps in ServerObjects.ByServer.maps]
+        mapIds = list(set(mapIds))
+        index = mapIds.index(payload)
+        del ServerObjects.ByServer.maps[index]
+        return f"map with id {payload} is deleted."
+
     def check_session(self, data):
         if data['type'] == 'login':
             username = data['username']
@@ -222,9 +282,9 @@ class Agent(threading.Thread):
             try:
                 data = getData(self.conn)
                 print('data =', data, type(data))
-                #sessionExits = self.check_session(data)
-                #print('session exists?', sessionExits)
-                #if not sessionExits:
+                # sessionExits = self.check_session(data)
+                # print('session exists?', sessionExits)
+                # if not sessionExits:
                 #    continue
                 if data['type'] == 'simulation':
                     if self.simulator:
@@ -248,140 +308,6 @@ class Agent(threading.Thread):
                     print('result =', result)
                     sendData(self.conn, {'result': result})
 
-                """
-                if response[0] == ae.ADD_MAP:
-                    
-                if response[0] == ae.ADD_SCHEDULE:
-                    ServerObjects.ByThread.addScheduleLock.acquire()
-                    created_map = ServerObjects.ByServer.maps[0]
-                    schedule = Schedule(created_map)
-                    ServerObjects.ByServer.schedules.append(schedule)
-                    putNotification(
-                        f"Thread {threading.get_ident()} added a new schedule on Map")
-                    ServerObjects.ByThread.addScheduleLock.release()
-    
-                if response[0] == ae.SHOW_ALL_THREADS:
-                    json_data = json.dumps(ServerObjects.ByServer.addresses)
-                    sendData(self.conn, json_data)
-    
-                if response[0] == ae.LIST_MAPS:
-                    mapIds = [str(maps.id) for maps in ServerObjects.ByServer.maps]
-                    mapIds = list(set(mapIds))
-                    sendData(self.conn, f"{' '.join(mapIds)}")
-    
-                # ----------- open map functions ------------------
-                if response[0] == ae.OPEN_MAP:
-                    mapIds = [str(maps.id) for maps in ServerObjects.ByServer.maps]
-                    mapIds = list(set(mapIds))
-                    if response[1] in mapIds:
-                        self.selectedMapId = int(response[1])
-                        for schedule in ServerObjects.ByServer.schedules:
-                            print(f"sched id : {schedule.map.id}")
-                            print(f"map id : {self.selectedMapId}")
-                            if schedule.map.id == self.selectedMapId:
-                                self.attachedSchedules.append(schedule)
-                        index = mapIds.index(response[1])
-                        self.selectedMap = ServerObjects.ByServer.maps[index]
-                        sendData(self.conn, f"Map with id {self.selectedMapId} is opened\n")
-    
-                if response[0] == ae.CLOSE_MAP:
-                    self.selectedMapId = 0
-                    self.selectedMap = None
-                    self.attachedSchedules = []
-                    sendData(self.conn, f"Map is closed\n")
-    
-                if response[0] == ae.LIST_SCHEDULES:
-                    schedIds = [str(schedule.id) for schedule in self.attachedSchedules]
-                    schedIds = list(set(schedIds))
-                    sendData(self.conn, ' '.join(schedIds))
-    
-                if response[0] == ae.LIST_STOPS:
-                    stops = self.selectedMap.getStopsInfo()
-                    sendData(self.conn, str(stops))
-    
-                if response[0] == ae.LIST_ROUTES:
-                    schedIds = [str(schedule.id) for schedule in self.attachedSchedules]
-                    index = schedIds.index(response[1])
-                    schedule_edited = self.attachedSchedules[index]
-                    routes = schedule_edited.listroutes()
-                    sendData(self.conn, concat(routes))
-    
-                if response[0] == ae.ADD_ROUTE:
-                    ServerObjects.ByThread.addRouteLock.acquire()
-                    schedIds = [str(schedule.id) for schedule in self.attachedSchedules]
-                    index = schedIds.index(response[1])
-                    schedule_edited = self.attachedSchedules[index]
-                    stoplist = []
-                    for i in range(int(response[2])):
-                        stoplist.append(UUID(response[3 + i]))
-                    schedule_edited.newroute(Route(stoplist))
-                    putNotification("New route is added.")
-                    ServerObjects.ByThread.addRouteLock.release()
-    
-                if response[0] == ae.UP_ROUTE:
-                    ServerObjects.ByThread.addRouteLock.acquire()
-                    schedIds = [str(schedule.id) for schedule in self.attachedSchedules]
-                    index = schedIds.index(response[1])
-                    schedule_edited = self.attachedSchedules[index]
-                    route_edited = int(response[2])
-                    stoplist = []
-                    for i in range(int(response[3])):
-                        stoplist.append(UUID(response[4 + i]))
-                    schedule_edited.updateroute(route_edited, stoplist)
-                    putNotification(f"Route with id {route_edited} is updated.")
-                    ServerObjects.ByThread.addRouteLock.release()
-    
-                if response[0] == ae.DEL_ROUTE:
-                    ServerObjects.ByThread.addRouteLock.acquire()
-                    schedIds = [str(schedule.id) for schedule in self.attachedSchedules]
-                    index = schedIds.index(response[1])
-                    schedule_edited = self.attachedSchedules[index]
-                    schedule_edited.delroute(int(response[2]))
-                    putNotification(f"Route with id {int(response[2])} is deleted.")
-                    ServerObjects.ByThread.addRouteLock.release()
-    
-                if response[0] == ae.LIST_LINES:
-                    schedIds = [str(schedule.id) for schedule in self.attachedSchedules]
-                    index = schedIds.index(response[1])
-                    schedule_edited = self.attachedSchedules[index]
-                    lines = schedule_edited.listlines()
-                    sendData(self.conn, concat(lines))
-                # Line(datetime.time(hour=14, minute=30), datetime.time(hour=20), datetime.time(minute=30),
-                #                                    self.schedule.getroute(1), "ilk line")
-                if response[0] == ae.ADD_LINE:
-                    ServerObjects.ByThread.addLineLock.acquire()
-                    schedIds = [str(schedule.id) for schedule in self.attachedSchedules]
-                    index = schedIds.index(response[1])
-                    schedule_edited = self.attachedSchedules[index]
-                    schedule_edited.addLine(Line(datetime.time(hour=int(response[2]), minute=int(response[3])),
-                                                 datetime.time(hour=int(response[4]), minute=int(response[5])),
-                                                 datetime.time(minute=int(response[6])),
-                                                 schedule_edited.getroute(int(response[7])), response[8]))
-                    putNotification("New line is added.")
-                    ServerObjects.ByThread.addLineLock.release()
-    
-                if response[0] == ae.UP_LINE:
-                    ServerObjects.ByThread.addLineLock.acquire()
-                    schedIds = [str(schedule.id) for schedule in self.attachedSchedules]
-                    index = schedIds.index(response[1])
-                    schedule_edited = self.attachedSchedules[index]
-                    line_edited = int(response[2])
-                    schedule_edited.updateLine(datetime.time(hour=int(response[3]), minute=int(response[4])),
-                                               datetime.time(hour=int(response[5]), minute=int(response[6])),
-                                               datetime.time(minute=int(response[7])),
-                                               schedule_edited.getroute(int(response[8])), response[9])
-                    putNotification(f"Line with id {line_edited} is updated.")
-                    ServerObjects.ByThread.addLineLock.release()
-    
-                if response[0] == ae.DEL_LINE:
-                    ServerObjects.ByThread.addLineLock.acquire()
-                    schedIds = [str(schedule.id) for schedule in self.attachedSchedules]
-                    index = schedIds.index(response[1])
-                    schedule_edited = self.attachedSchedules[index]
-                    schedule_edited.delLine(int(response[2]))
-                    putNotification(f"Line with id {int(response[2])} is deleted.")
-                    ServerObjects.ByThread.addRouteLock.release()
-            """
             except Exception as e:
                 traceback.print_exc()
                 sendData(self.conn, {'error': str(e)})

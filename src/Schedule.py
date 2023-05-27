@@ -29,7 +29,7 @@ class Schedule:
         for stop in route.stops:
             if not self.map.stops[stop]:
                 return RouteStopIdNotFoundException(ErrorCodes.ByRoute.ROUTE_STOP_ID_NOT_FOUND,
-                f"Given stop id with {stop} is not in the map\n")
+                                                    f"Given stop id with {stop} is not in the map\n")
 
         self.routes[route.id] = route
         return route
@@ -47,7 +47,7 @@ class Schedule:
         return route
 
     def delroute(self, routeId):
-        self.routes[routeId] = None
+        del self.routes[routeId]
 
     def listroutes(self):
         result = {}
@@ -74,7 +74,7 @@ class Schedule:
         return line
 
     def delLine(self, line_id):
-        self.lines[line_id] = None
+        del self.lines[line_id]
 
     def listlines(self):
         return [self.lineinfo(lineId) for lineId in self.lines]
