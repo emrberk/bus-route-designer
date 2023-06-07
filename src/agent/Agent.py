@@ -122,6 +122,8 @@ class Agent(threading.Thread):
             index = mapIds.index(payload)
             self.selectedMap = ServerObjects.ByServer.maps[index]
             return f"Map with id {self.selectedMapId} is opened"
+        else:
+            return f"Could not find a map with id {payload}"
 
     def add_route(self, data):
         stopIds = data['stopIds'].split(' ')
@@ -282,13 +284,12 @@ class Agent(threading.Thread):
             try:
                 data = getData(self.conn)
                 print('data =', data, type(data))
-                # sessionExits = self.check_session(data)
-                # print('session exists?', sessionExits)
-                # if not sessionExits:
-                #    continue
+                sessionExits = self.check_session(data)
+                print('session exists?', sessionExits)
+                if not sessionExits:
+                    continue
                 if data['type'] == 'simulation':
-                    if self.simulator:
-                        continue
+                    self.stop_simulation.clear()
                     startTime = data['startTime'].split(':')
                     self.simulator = Simulator(
                         self.selectedMap,

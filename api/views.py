@@ -12,13 +12,13 @@ except:
     client.join()
 messageQueue = ClientObjects.incomingMessageQueue
 responseQueue = ClientObjects.responseQueue
+userCookie = None
 
 
 def index(request):
+    if 'cookie' not in request.COOKIES or request.COOKIES['cookie'] != userCookie:
+        return redirect('/api/login')
     if request.method == 'GET':
-        if 'cookie' not in request.COOKIES:
-            response = redirect('/api/login')
-            return response
         return render(request, 'index.html')
     elif request.method == 'POST':
         data = dict(request.POST)
@@ -35,14 +35,18 @@ def index(request):
 
 
 def simulator(request):
+    if 'cookie' not in request.COOKIES or request.COOKIES['cookie'] != userCookie:
+        return redirect('/api/login')
+
     if request.method == 'POST':
         data = {
             'speed': request.POST['speed'],
             'startTime': request.POST['startTime'],
-            'type': 'simulation'
+            'type': 'simulation',
+            'cookie': request.COOKIES.get('cookie')
         }
-        messageQueue.put(json.dumps(data))
         ClientObjects.simulationData = []
+        messageQueue.put(json.dumps(data))
         return redirect('/api/simulator')
         # return render(request, 'simulator.html', {'result': 'Simulation started'})
     else:
@@ -51,6 +55,7 @@ def simulator(request):
 
 
 def login(request):
+    global userCookie
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -65,5 +70,6 @@ def login(request):
             return render(request, 'login.html', {'errorMessage': 'User not found'})
         response = redirect('/api/')
         response.set_cookie(key='cookie', value=responseMessage['cookie'])
+        userCookie = responseMessage['cookie']
         return response
     return render(request, 'login.html')
