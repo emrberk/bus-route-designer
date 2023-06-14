@@ -123,6 +123,16 @@ def sendData(s, data):
         s.send(chunk)
 
 
+async def receive(websocket):
+    data = await websocket.recv()
+    try:
+        json_data = json.loads(data)
+        return json_data
+    except json.JSONDecodeError:
+        print("Error: Invalid JSON data")
+        return None
+
+
 def getData(s):
     data = s.recv(1024).decode().replace('\n', '').replace('\r', '')
     if data.startswith("S-"):

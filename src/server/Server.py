@@ -1,9 +1,11 @@
 import argparse
+import asyncio
 import queue
-import socket
-import threading
-import sys
 import signal
+import sys
+
+import websockets
+
 sys.path.append('../../')
 from src.agent.Agent import Agent
 from src.server.ServerObjects import ServerObjects
@@ -12,49 +14,39 @@ from src.server.ServerObjects import ServerObjects
 class Server:
     def __init__(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('--port', help='TCP server port number', type=int, required=True)
+        parser.add_argument('--port', help='Websocket server port number', type=int, required=True)
         self.messageQueue = queue.Queue()
         self.args = parser.parse_args()
-        self.addScheduleLock = threading.Lock()
-        self.s = None
+        self.addScheduleLock = asyncio.Lock()
+        self.server = None
 
         # Close opened ports when Ctrl-C pressed
         signal.signal(signal.SIGINT, self.interruptHandler)
 
-    """
-    def printMessages(self):
-        while True:
-            if not self.messageQueue.empty():
-                print(self.messageQueue.queue[0])
-                if all(thread.newMessage.is_set() for thread in ServerObjects.ByServer.threads):
-                    all(thread.newMessage.clear() for thread in ServerObjects.ByServer.threads)
-                    self.messageQueue.get()
-                    break
-            else:
-                break
-    """
-
-    def startServer(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('localhost', self.args.port))
-            self.s = s
-            s.listen()
-
-            print(f'TCP server is listening on port {self.args.port}...')
-
-            while True:
-                conn, addr = s.accept()
-                ServerObjects.ByServer.addresses.append(addr)
-                ServerObjects.ByServer.notifications[addr] = queue.Queue()
-                newThread = Agent(conn, addr)
-                ServerObjects.ByServer.threads.append(newThread)
-                newThread.start()
+    async def startServer(self, websocket, path):
+        addr = websocket.remote_address
+        ServerObjects.ByServer.addresses.append(addr)
+        ServerObjects.ByServer.notifications[addr] = queue.Queue()
+        newThread = Agent(websocket, addr)
+        ServerObjects.ByServer.threads.append(newThread)
+        newThread.start()
+        await newThread.run()
 
     def interruptHandler(self, signum, frame):
-        self.s.close()
+        if self.server:
+            self.server.close()
+            asyncio.get_event_loop().run_until_complete(self.server.wait_closed())
         exit(1)
+
+    def run(self):
+        print(f'Websocket server is listening on port {self.args.port}...')
+
+        self.server = websockets.serve(self.startServer, 'localhost', self.args.port)
+
+        asyncio.get_event_loop().run_until_complete(self.server)
+        asyncio.get_event_loop().run_forever()
 
 
 if __name__ == '__main__':
     server = Server()
-    server.startServer()
+    server.run()

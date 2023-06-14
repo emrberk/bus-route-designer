@@ -1,9 +1,9 @@
-import argparse
-import socket
-import threading
+import asyncio
 import sys
-import signal
-import json
+import threading
+
+import websockets
+
 sys.path.append('../../')
 
 from src.util import Utils
@@ -14,7 +14,7 @@ from src.client.ClientObjects import ClientObjects
 
 class Client(threading.Thread):
     def __init__(self, targetHost, targetPort):
-        self.socket = None
+        self.websocket = None
         self.listener = None
         self.sender = None
         self.targetHost = targetHost
@@ -23,18 +23,21 @@ class Client(threading.Thread):
         self.killSender = threading.Event()
         super().__init__()
 
-        # Close opened ports when Ctrl-C pressed
-        # signal.signal(signal.SIGINT, self.interruptHandler)
     def run(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self.connect())
+
+    async def connect(self):
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect((self.targetHost, self.targetPort))
-            self.socket = s
-            # introduce the listener socket of client to server
-            sender = Sender(self.socket, self.killSender)
+            uri = f"ws://{self.targetHost}:{self.targetPort}"
+            self.websocket = await websockets.connect(uri)
+
+            sender = Sender(self.websocket, self.killSender)
             self.sender = sender
             sender.start()
-            listener = Listener(self.socket, self.killListener)
+
+            listener = Listener(self.websocket, self.killListener)
             self.listener = listener
             listener.start()
 
@@ -58,6 +61,6 @@ class Client(threading.Thread):
     def interruptHandler(self, signum, frame):
         self.killSender.set()
         self.killListener.set()
-        self.socket.close()
+        self.websocket.close()
         exit(1)
     """
