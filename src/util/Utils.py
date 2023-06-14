@@ -124,6 +124,7 @@ def sendData(s, data):
 
 
 async def receive(websocket):
+    print("bunu bekliyom kanka: receive")
     data = await websocket.recv()
     try:
         json_data = json.loads(data)

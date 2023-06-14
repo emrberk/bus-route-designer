@@ -14,7 +14,7 @@ from src.server.ServerObjects import ServerObjects
 class Server:
     def __init__(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('--port', help='Websocket server port number', type=int, required=True)
+        parser.add_argument('--port', help='WebSocket server port number', type=int, required=True)
         self.messageQueue = queue.Queue()
         self.args = parser.parse_args()
         self.addScheduleLock = asyncio.Lock()
@@ -30,7 +30,6 @@ class Server:
         newThread = Agent(websocket, addr)
         ServerObjects.ByServer.threads.append(newThread)
         newThread.start()
-        await newThread.run()
 
     def interruptHandler(self, signum, frame):
         if self.server:
@@ -39,7 +38,7 @@ class Server:
         exit(1)
 
     def run(self):
-        print(f'Websocket server is listening on port {self.args.port}...')
+        print(f'WebSocket server is listening on port {self.args.port}...')
 
         self.server = websockets.serve(self.startServer, 'localhost', self.args.port)
 

@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import queue
 import threading
@@ -280,35 +281,43 @@ class Agent(threading.Thread):
     def run(self):
         self.notificationHandler.start()
         print(f'Client {self.addr} is connected.')
-        while not self._stop_event.is_set():
-            try:
-                data = getData(self.conn)
-                print('data =', data, type(data))
-                sessionExits = self.check_session(data)
-                print('session exists?', sessionExits)
-                if not sessionExits:
-                    continue
-                if data['type'] == 'simulation':
-                    self.stop_simulation.clear()
-                    startTime = data['startTime'].split(':')
-                    self.simulator = Simulator(
-                        self.selectedMap,
-                        ServerObjects.ByServer.lines,
-                        ServerObjects.ByServer.notifications,
-                        int(data['speed']),
-                        datetime.time(hour=int(startTime[0]), minute=int(startTime[1])),
-                        putNotification,
-                        self.stop_simulation
-                    )
-                    self.simulator.start()
-                else:
-                    if self.simulator:
-                        self.stop_simulation.set()
-                        self.simulator.join()
-                    result = self.lib[data['type']][data['instance']]['function'](data)
-                    print('result =', result)
-                    sendData(self.conn, {'result': result})
 
-            except Exception as e:
-                traceback.print_exc()
-                sendData(self.conn, {'error': str(e)})
+        async def handle_client():
+            while not self._stop_event.is_set():
+                try:
+                    print("Buraya girdim kanka : ")
+                    data = await receive(self.conn)
+                    print('data =', data, type(data))
+                    sessionExists = self.check_session(data)
+                    print('session exists?', sessionExists)
+                    if not sessionExists:
+                        continue
+                    if data['type'] == 'simulation':
+                        self.stop_simulation.clear()
+                        startTime = data['startTime'].split(':')
+                        self.simulator = Simulator(
+                            self.selectedMap,
+                            ServerObjects.ByServer.lines,
+                            ServerObjects.ByServer.notifications,
+                            int(data['speed']),
+                            datetime.time(hour=int(startTime[0]), minute=int(startTime[1])),
+                            putNotification,
+                            self.stop_simulation
+                        )
+                        self.simulator.start()
+                    else:
+                        if self.simulator:
+                            self.stop_simulation.set()
+                            self.simulator.join()
+                        result = self.lib[data['type']][data['instance']]['function'](data)
+                        print('result =', result)
+                        await sendData(self.conn, {'result': result})
+
+                except Exception as e:
+                    traceback.print_exc()
+                    await sendData(self.conn, {'error': str(e)})
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(handle_client())
+        loop.close()
